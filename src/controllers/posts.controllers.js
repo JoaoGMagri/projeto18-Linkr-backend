@@ -1,19 +1,39 @@
-function like(req, res) {
+import { postRepos } from "../repositories/posts.repos";
+
+async function like(req, res) {
   const { idPost: id } = req.params;
   try {
-    console.log("like this post:", id);
+    const postLike = await postRepos.addLike(id);
 
-    return res.status(200).send();
+    if (postLike.rowCount === 0) {
+      return res.sendStatus(400);
+    }
+
+    await postRepos.addPeopleWhoLiked({
+      idUser: postLike[0].id,
+      idPost: id,
+    });
+
+    return res.sendStatus(201);
   } catch (e) {
     return res.status(500).send();
   }
 }
-function dislike(req, res) {
+async function dislike(req, res) {
   const { idPost: id } = req.params;
   try {
-    console.log("dislike this post:", id);
+    const postDislike = await postRepos.removeLike(id);
 
-    return res.status(200).send();
+    if (postDislike.rowCount === 0) {
+      return res.sendStatus(400);
+    }
+
+    await postRepos.removePeopleWhoLiked({
+      idUser: postDislike[0].id,
+      idPost: id,
+    });
+
+    return res.sendStatus(201);
   } catch (e) {
     return res.status(500).send();
   }
