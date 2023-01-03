@@ -18,6 +18,7 @@ function dislike(req, res) {
     return res.status(500).send();
   }
 }
+
 export const postControllers = {
   like,
   dislike,
