@@ -7,6 +7,6 @@ const routes = express.Router();
 
 routes.get("/hashtags", hashtagsControllers.viewAll);
 
-routes.post("/hashtag/:hashtag", postControllers.viewByHashtag);
+routes.get("/hashtag/:hashtag", postControllers.viewByHashtag);
 
 export default routes;
