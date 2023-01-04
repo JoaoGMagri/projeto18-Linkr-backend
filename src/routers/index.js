@@ -1,9 +1,9 @@
-import express from "express";
+/* import express from "express";
 
-import postRoutes from "./posts.routes";
+import postRoutes from "./posts.routes.js";
 
 const routes = express.Router();
 
 routes.use(postRoutes);
 
-export default routes;
+export default routes; */

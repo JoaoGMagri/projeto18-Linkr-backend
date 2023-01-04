@@ -1,4 +1,28 @@
-import { connection } from "../database/database";
+import { connection } from "../database/database.js";
+
+async function insertPost({ text, url, idUser }) {
+  return connection.query(
+    `
+    INSERT INTO 
+      "posts" (
+        url,
+        text,
+        "idUser"
+      )
+    VALUES
+      (
+        $1, 
+        $2, 
+        $3
+      );
+    `,
+    [text, url, idUser]
+  );
+}
+
+async function listPost() {
+  return connection.query(`SELECT * FROM "posts"`);
+}
 
 async function addLike(id) {
   return connection.query(
@@ -58,6 +82,8 @@ async function removePeopleWhoLiked({ idUser, idPost }) {
 }
 
 export const postRepos = {
+  insertPost,
+  listPost,
   addLike,
   removeLike,
   addPeopleWhoLiked,
