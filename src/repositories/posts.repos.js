@@ -6,7 +6,7 @@ async function addLike(id) {
     UPDATE
       posts
     SET
-      count: count + 1
+      like: like + 1
     WHERE
       id:$1;
   `,
@@ -19,7 +19,7 @@ async function removeLike(id) {
     UPDATE
       posts
     SET
-      count: count - 1
+      like: like - 1
     WHERE
       id:$1;
   `,
