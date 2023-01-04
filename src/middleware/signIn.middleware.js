@@ -36,9 +36,13 @@ export async function signInMD(req, res, next) {
             return res.send(userSession.rows[0].token);
         }
 
+        delete userExists.rows[0].password;
+        delete userExists.rows[0].email;
+        
         const objSignIn = { 
             token, 
-            userId: userExists.rows[0].id 
+            user: userExists.rows[0] 
+
         }
         req.objSignIn = objSignIn;
 
