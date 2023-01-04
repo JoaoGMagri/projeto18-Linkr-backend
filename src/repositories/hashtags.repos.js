@@ -1,5 +1,17 @@
 import { connection } from "../database/database.js";
 
+async function insertHashtag(name) {
+  return connection.query(
+    `
+    INSERT INTO
+      hashtags (
+        name
+      )
+    VALUES ($1);
+  `,
+    [name]
+  );
+}
 async function getAllHashtags() {
   return connection.query(`
     SELECT
@@ -30,6 +42,7 @@ async function getPostsFromHashtag(name) {
   );
 }
 export const hashtagRepos = {
+  insertHashtag,
   getAllHashtags,
   getPostsFromHashtag,
 };
