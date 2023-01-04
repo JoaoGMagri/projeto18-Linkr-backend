@@ -1,8 +1,8 @@
 import {connection} from "../database/database.js";
 
-export async function postSingUp(req, res) {
+export async function postSignUp(req, res) {
 
-    const {name, email, password, image} = req.objSingUP;
+    const {name, email, password, image} = req.objSignUP;
 
     try {
 
@@ -21,10 +21,9 @@ export async function postSingUp(req, res) {
     }
 
 }
+export async function postSignIn(req, res) {
 
-export async function postSingIn(req, res) {
-
-    const {token, userId} = req.objSingIn;
+    const {token, userId} = req.objSignIn;
 
     try {
 

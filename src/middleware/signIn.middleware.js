@@ -4,7 +4,7 @@ import joi from "joi";
 
 import {connection} from "../database/database.js";
 
-export async function singInMD(req, res, next) {
+export async function signInMD(req, res, next) {
 
     const { email, password } = req.body;
     const token = uuidv4();
@@ -36,11 +36,11 @@ export async function singInMD(req, res, next) {
             return res.send(userSession.rows[0].token);
         }
 
-        const objSingIn = { 
+        const objSignIn = { 
             token, 
             userId: userExists.rows[0].id 
         }
-        req.objSingIn = objSingIn;
+        req.objSignIn = objSignIn;
 
     } catch (error) {
         console.log(error);
