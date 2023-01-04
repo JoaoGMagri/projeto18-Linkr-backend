@@ -21,3 +21,25 @@ export async function postSingUp(req, res) {
     }
 
 }
+
+export async function postSingIn(req, res) {
+
+    const {token, userId} = req.objSingIn;
+
+    try {
+
+        await connection.query(`
+            INSERT INTO 
+                session (token, "idUser")
+            VALUES
+                ($1, $2);
+        `
+        ,[token, userId]);
+        res.send(token).status(200);
+
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+
+}
