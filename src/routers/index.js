@@ -1,6 +1,6 @@
 import express from "express";
 
-import postRoutes from "./posts.routes";
+import postRoutes from "./posts.routes.js";
 
 const routes = express.Router();
 
