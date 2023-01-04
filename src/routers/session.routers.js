@@ -1,12 +1,12 @@
 import { Router } from "express";
 
-import { postSingUp, postSingIn } from "../controllers/session.controllers.js"
-import { singUpMD } from "../middleware/singUp.middleware.js";
-import { singInMD } from "../middleware/singIn.middleware.js";
+import { postSignUp, postSignIn } from "../controllers/session.controllers.js"
+import { signUpMD } from "../middleware/signUp.middleware.js";
+import { signInMD } from "../middleware/signIn.middleware.js";
 
 const router = Router();
 
-router.post("/signup", singUpMD, postSingUp);
-router.post("/signin", singInMD, postSingIn);
+router.post("/signup", signUpMD, postSignUp);
+router.post("/signin", signInMD, postSignIn);
 
 export default router;

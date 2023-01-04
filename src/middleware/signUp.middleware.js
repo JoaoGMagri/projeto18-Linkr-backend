@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import { connection } from "../database/database.js";
 import joi from "joi";
 
-export async function singUpMD(req, res, next) {
+export async function signUpMD(req, res, next) {
 
     const { name, email, password, image } = req.body;
 
@@ -27,14 +27,14 @@ export async function singUpMD(req, res, next) {
         }
         const passwordCrypt = bcrypt.hashSync(password, 10);
 
-        const objSingUP = {
+        const objSignUP = {
             name,
             email,
             image,
             password: passwordCrypt
         }
 
-        req.objSingUP = objSingUP;
+        req.objSingUP = objSignUP;
 
     } catch (error) {
         console.log(error);
