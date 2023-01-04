@@ -1,36 +1,38 @@
 import { connection } from "../database/database.js";
 
-async function insertPost({
-  //userId,
-  text,
-  url,
-  urlTitle,
-  urlImage,
-  urlDescription,
-}) {
+async function insertPost({ text, url, idUser }) {
   return connection.query(
     `
-    INSERT INTO posts 
-    (text, url, "urlTitle", "urlImage", "urlDescription") 
-    VALUES ($1, $2, $3, $4, $5, $6);
+    INSERT INTO 
+      "posts" (
+        url,
+        text,
+        "idUser"
+      )
+    VALUES
+      (
+        $1, 
+        $2, 
+        $3
+      );
     `,
-    [id, text, url, urlTitle, urlImage, urlDescription]
+    [text, url, idUser]
   );
 }
 
 async function listPost() {
   return connection.query(
     `
-    SELECT posts.text, 
-    posts.url,
-    posts.likes,
-    users.name,
-    users.image
-    FROM posts
-    JOIN users ON posts."userId" = users.id
-    LIMIT 20;
-    `
-  );
+  SELECT posts.text, 
+  posts.url,
+  posts.likes,
+  users.name,
+  users.image
+  FROM posts
+  JOIN users ON posts."idUser" = users.id
+  ORDER BY posts.id DESC
+  LIMIT 20;
+  `);
 }
 
 async function addLike(id) {

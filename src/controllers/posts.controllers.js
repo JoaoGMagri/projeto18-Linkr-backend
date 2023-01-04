@@ -2,31 +2,34 @@ import { postRepos } from "../repositories/posts.repos.js";
 import urlMetadata from "url-metadata";
 
 async function publishPost(req, res) {
-  //const { userId } = res.locals;
-  const { id, text, url } = req.body;
+  const { text, url } = req.body;
+  const userData = req.userExist;
+  const idUser = userData.rows[0].idUser;
 
   try {
     const urlmetadata = await urlMetadata(url);
-    let body = { id, text, url };
+    let response;
+    let body = { text, url, idUser };
 
     if (urlmetadata.title === null) {
-      body = {
+      response = {
         ...body,
         urlTitle: "Cannot load title information",
         urlImage: "https://cdn-icons-png.flaticon.com/512/3097/3097257.png",
         urlDescription: "Cannot load description information",
       };
     } else {
-      body = {
+      response = {
         ...body,
         urlTitle: urlmetadata.title,
         urlImage: urlmetadata.image,
         urlDescription: urlmetadata.description,
       };
     }
-    console.log(body);
+    console.log(response);
     await postRepos.insertPost(body);
-    return res.sendStatus(201);
+
+    return res.status(201).send(body);
   } catch (e) {
     return res.status(500).send(e);
   }
