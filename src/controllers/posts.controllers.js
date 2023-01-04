@@ -1,5 +1,5 @@
-import { hashtagRepos } from "../repositories/hashtags.repos";
-import { postRepos } from "../repositories/posts.repos";
+import { hashtagRepos } from "../repositories/hashtags.repos.js";
+import { postRepos } from "../repositories/posts.repos.js";
 
 async function like(req, res) {
   const { idPost: id } = req.params;

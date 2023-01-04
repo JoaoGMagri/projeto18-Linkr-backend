@@ -1,4 +1,4 @@
-import { hashtagRepos } from "../repositories/hashtags.repos";
+import { hashtagRepos } from "../repositories/hashtags.repos.js";
 
 async function viewAll(req, res) {
   const { hashtag: name } = req.params;

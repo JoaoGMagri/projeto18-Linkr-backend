@@ -1,7 +1,7 @@
 import express from "express";
 
-import { postControllers } from "../controllers/posts.controllers";
-import { hashtagsControllers } from "../controllers/hashtags.controllers";
+import { postControllers } from "../controllers/posts.controllers.js";
+import { hashtagsControllers } from "../controllers/hashtags.controllers.js";
 
 const routes = express.Router();
 

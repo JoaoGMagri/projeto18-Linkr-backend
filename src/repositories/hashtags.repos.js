@@ -1,4 +1,4 @@
-import { connection } from "../database/database";
+import { connection } from "../database/database.js";
 
 async function getAllHashtags() {
   return connection.query(`
