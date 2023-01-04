@@ -1,3 +1,4 @@
+import { hashtagRepos } from "../repositories/hashtags.repos";
 import { postRepos } from "../repositories/posts.repos";
 
 async function like(req, res) {
@@ -38,8 +39,19 @@ async function dislike(req, res) {
     return res.status(500).send();
   }
 }
+async function viewByHashtag(req, res) {
+  const { hashtag } = req.params;
+  try {
+    const posts = await hashtagRepos.getPostsFromHashtag(hashtag);
+
+    return res.status(200).send({ posts });
+  } catch (error) {
+    return res.status(500).send(error.message);
+  }
+}
 
 export const postControllers = {
   like,
   dislike,
+  viewByHashtag,
 };
