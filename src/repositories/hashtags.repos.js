@@ -15,9 +15,19 @@ async function insertHashtag(name) {
 async function getAllHashtags() {
   return connection.query(`
     SELECT
-      *
+      hashtags.name
     FROM
-      hashtags;
+      "hashtagsPosts"
+    INNER JOIN
+      hashtags
+    ON
+      hashtags.id="hashtagsPosts"."idHashtag"
+    GROUP BY
+      hashtags.name
+    ORDER BY
+      COUNT("hashtagsPosts"."idPost") DESC
+    LIMIT
+      10;
   `);
 }
 async function getPostsFromHashtag(name) {
