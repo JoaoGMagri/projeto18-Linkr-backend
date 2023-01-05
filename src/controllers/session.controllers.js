@@ -2,7 +2,7 @@ import {connection} from "../database/database.js";
 
 export async function postSignUp(req, res) {
 
-    const {name, email, password, image} = req.objSignUP;
+    const {name, email, password, image} = res.locals;
 
     try {
 

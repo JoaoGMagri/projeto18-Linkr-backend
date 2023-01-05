@@ -31,19 +31,21 @@ export async function signInMD(req, res, next) {
             return res.sendStatus(401);
         }
 
-        const userSession = await connection.query(`SELECT * FROM session WHERE "idUser"=$1`, [userExists.rows[0].id]);
-        if (userSession.rowCount !== 0) {
-            return res.send(userSession.rows[0].token);
-        }
-
+        
         delete userExists.rows[0].password;
         delete userExists.rows[0].email;
         
         const objSignIn = { 
             token, 
             user: userExists.rows[0] 
-
         }
+        console.log(objSignIn);
+        
+        const userSession = await connection.query(`SELECT * FROM session WHERE "idUser"=$1`, [userExists.rows[0].id]);
+        if (userSession.rowCount !== 0) {
+            return res.send({token: userSession.rows[0].token, user: userExists.rows[0]});
+        }
+
         req.objSignIn = objSignIn;
 
     } catch (error) {
