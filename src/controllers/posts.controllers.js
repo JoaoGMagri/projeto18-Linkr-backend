@@ -3,6 +3,7 @@ import { postRepos } from "../repositories/posts.repos.js";
 
 async function like(req, res) {
   const { idPost: id } = req.params;
+  const { rows: user } = res.locals.userExist;
   try {
     const postLike = await postRepos.addLike(id);
 
@@ -11,7 +12,7 @@ async function like(req, res) {
     }
 
     await postRepos.addPeopleWhoLiked({
-      idUser: postLike[0].id,
+      idUser: user[0].id,
       idPost: id,
     });
 
@@ -22,6 +23,7 @@ async function like(req, res) {
 }
 async function dislike(req, res) {
   const { idPost: id } = req.params;
+  const { rows: user } = res.locals.userExist;
   try {
     const postDislike = await postRepos.removeLike(id);
 
@@ -30,7 +32,7 @@ async function dislike(req, res) {
     }
 
     await postRepos.removePeopleWhoLiked({
-      idUser: postDislike[0].id,
+      idUser: user[0].id,
       idPost: id,
     });
 
