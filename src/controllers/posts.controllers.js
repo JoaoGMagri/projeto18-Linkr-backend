@@ -3,13 +3,12 @@ import urlMetadata from "url-metadata";
 
 async function publishPost(req, res) {
   const { text, url } = req.body;
-  const userData = req.userExist;
+  const userData = res.locals.userExist;
   const idUser = userData.rows[0].idUser;
-
   try {
     const urlmetadata = await urlMetadata(url);
     let response;
-    let body = { text, url, idUser };
+    let body = { text, url, idUser};
 
     if (urlmetadata.title === null) {
       response = {
@@ -26,7 +25,6 @@ async function publishPost(req, res) {
         urlDescription: urlmetadata.description,
       };
     }
-    console.log(response);
     await postRepos.insertPost(body);
 
     return res.status(201).send(body);
@@ -41,7 +39,7 @@ async function listPosts(req, res) {
 
     return res.status(200).send(result.rows);
   } catch (e) {
-    return res.status(500).send();
+    return res.status(500).send(e);
   }
 }
 

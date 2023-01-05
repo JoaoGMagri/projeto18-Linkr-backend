@@ -1,6 +1,6 @@
 import { connection } from "../database/database.js";
 
-async function insertPost({ text, url, idUser }) {
+async function insertPost({ url, text, idUser, createdAt }) {
   return connection.query(
     `
     INSERT INTO 
@@ -16,23 +16,19 @@ async function insertPost({ text, url, idUser }) {
         $3
       );
     `,
-    [text, url, idUser]
+    [url, text, idUser]
   );
 }
 
 async function listPost() {
   return connection.query(
     `
-  SELECT posts.text, 
-  posts.url,
-  posts.likes,
-  users.name,
-  users.image
-  FROM posts
-  JOIN users ON posts."idUser" = users.id
-  ORDER BY posts.id DESC
-  LIMIT 20;
-  `);
+    SELECT posts.url, posts.text, posts."idUser", users.name, users.image
+    FROM posts
+    JOIN users ON posts."idUser" = users.id
+    ORDER BY posts."idUser" DESC
+    LIMIT 20;`
+  );
 }
 
 async function addLike(id) {
