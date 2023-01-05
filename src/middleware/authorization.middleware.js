@@ -16,8 +16,19 @@ export async function authorization(req, res, next) {
     if (userExist.rowCount === 0) {
       return res.sendStatus(401);
     }
+    console.log(userExist.rows[0].idUser);
+    const user = await connection.query(
+      `
+      SELECT * FROM users
+      WHERE id = $1;
+      `,
+      [userExist.rows[0].idUser]
+    );
 
-    req.userExist = userExist;
+    delete user.rows[0].password;
+    delete user.rows[0].email;
+
+    res.locals.userExist = userExist;
   } catch (e) {
     res.status(500).send(e);
   }

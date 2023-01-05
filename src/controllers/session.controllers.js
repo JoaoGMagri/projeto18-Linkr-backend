@@ -23,7 +23,7 @@ export async function postSignUp(req, res) {
 }
 export async function postSignIn(req, res) {
 
-    const {token, userId} = req.objSignIn;
+    const {token, user} = req.objSignIn;
 
     try {
 
@@ -33,8 +33,8 @@ export async function postSignIn(req, res) {
             VALUES
                 ($1, $2);
         `
-        ,[token, userId]);
-        res.send(token).status(200);
+        ,[token, user.id]);
+        res.send({token, user}).status(200);
 
     } catch (error) {
         console.log(error);
