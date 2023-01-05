@@ -13,4 +13,6 @@ routes.post("/:idPost/dislike", postControllers.dislike);
 
 routes.get("/posts", postControllers.listPosts);
 
+routes.delete("/posts", postControllers.deletePost);
+
 export default routes;

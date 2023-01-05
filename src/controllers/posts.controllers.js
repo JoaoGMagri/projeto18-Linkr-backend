@@ -81,9 +81,20 @@ async function dislike(req, res) {
   }
 }
 
+async function deletePost(req, res) {
+  const { idPost } = req.body;
+  try {
+    await postRepos.deletePostUser(idPost);
+    return res.sendStatus(200);
+  } catch (e) {
+    return res.sendStatus(500);
+  }
+}
+
 export const postControllers = {
   publishPost,
   listPosts,
   like,
   dislike,
+  deletePost,
 };
