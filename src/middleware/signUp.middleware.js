@@ -33,8 +33,8 @@ export async function signUpMD(req, res, next) {
             image,
             password: passwordCrypt
         }
-
-        req.objSingUP = objSignUP;
+        console.log(objSignUP);
+        res.locals = objSignUP;
 
     } catch (error) {
         console.log(error);
