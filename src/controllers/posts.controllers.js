@@ -86,6 +86,7 @@ async function deletePost(req, res) {
   const { idPost: id } = req.params;
   try {
     await postRepos.deletePostUser(id);
+    console.log("Tá no controller");
     return res.sendStatus(200);
   } catch (e) {
     return res.sendStatus(500);

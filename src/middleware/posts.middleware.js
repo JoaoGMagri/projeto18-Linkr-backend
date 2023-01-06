@@ -1,3 +1,5 @@
+import { postRepos } from "../repositories/posts.repos.js";
+
 export async function urlValidation(req, res, next) {
   try {
     const { url } = req.body;
@@ -11,5 +13,20 @@ export async function urlValidation(req, res, next) {
     return res.sendStatus(500);
   }
 
+  next();
+}
+
+export async function deleteValidation(req, res, next) {
+  const { idPost } = req.params;
+
+  try {
+    const idExists = postRepos.searchIdPost(idPost);
+
+    if (!idExists.rows) {
+      return res.sendStatus(404);
+    }
+  } catch (e) {
+    return console.log(e), res.sendStatus(500);
+  }
   next();
 }
