@@ -8,7 +8,7 @@ async function publishPost(req, res) {
   try {
     const urlmetadata = await urlMetadata(url);
     let response;
-    let body = { text, url, idUser};
+    let body = { text, url, idUser };
 
     if (urlmetadata.title === null) {
       response = {
@@ -83,9 +83,9 @@ async function dislike(req, res) {
 }
 
 async function deletePost(req, res) {
-  const { idPost } = req.body;
+  const { idPost: id } = req.params;
   try {
-    await postRepos.deletePostUser(idPost);
+    await postRepos.deletePostUser(id);
     return res.sendStatus(200);
   } catch (e) {
     return res.sendStatus(500);
