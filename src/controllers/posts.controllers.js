@@ -11,8 +11,8 @@ async function publishPost(req, res) {
 
     if (!!hashtags.length) {
       hashtags.forEach(async (tag) => {
-        const tag = await hashtagRepos.findHashtag(tag);
-        if (tag.rowCount === 0) await hashtagRepos.insertHashtag(tag);
+        const findTag = await hashtagRepos.findHashtag(tag);
+        if (findTag.rowCount === 0) await hashtagRepos.insertHashtag(tag);
       });
     }
 
