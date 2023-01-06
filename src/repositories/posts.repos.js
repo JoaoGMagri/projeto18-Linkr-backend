@@ -19,7 +19,6 @@ async function insertPost({ url, text, idUser, createdAt }) {
     [url, text, idUser]
   );
 }
-
 async function listPost() {
   return connection.query(
     `
@@ -30,7 +29,6 @@ async function listPost() {
     LIMIT 20;`
   );
 }
-
 async function addLike(id) {
   return connection.query(
     `
