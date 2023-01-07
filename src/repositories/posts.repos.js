@@ -19,14 +19,58 @@ async function insertPost({ url, text, idUser, createdAt }) {
     [url, text, idUser]
   );
 }
-async function listPost() {
+async function listPost(idUser) {
   return connection.query(
     `
-    SELECT posts.url, posts.text, posts."idUser", users.name, users.image
-    FROM posts
-    JOIN users ON posts."idUser" = users.id
-    ORDER BY posts."idUser" DESC
-    LIMIT 20;`
+    SELECT
+      posts.url,
+      posts.text,
+      posts."idUser",
+      users.name as username,
+      users.image,
+      COALESCE (
+        array_agg (
+          json_build_object (
+            'id', likes."idUser",
+            'user', u.name
+          )
+        ) FILTER (where likes."idUser" is not null), ARRAY[]::json[] 
+      ) as likes,
+      CASE
+        WHEN up2."idUser"=$1 THEN true
+      ELSE
+        false
+      END AS "userLiked"
+    FROM 
+      posts
+    LEFT JOIN 
+      users 
+    ON 
+      posts."idUser" = users.id
+    LEFT JOIN 
+      "usersPosts" likes
+    ON 
+      likes."idPost" = posts.id
+    LEFT JOIN 
+      users u
+    ON 
+      likes."idUser" = u.id
+    LEFT JOIN 
+      "usersPosts" up2
+    ON 
+      up2."idPost" = posts.id
+    LEFT JOIN 
+      users u2
+    ON 
+      up2."idUser" = u2.id
+    GROUP BY 
+      posts.id,
+      users.name,
+      users.image,
+      up2."idUser"
+    ORDER BY 
+      posts."idUser" DESC;`,
+    [idUser]
   );
 }
 async function addLike(id) {
