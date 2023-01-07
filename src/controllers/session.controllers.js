@@ -42,3 +42,22 @@ export async function postSignIn(req, res) {
     }
 
 }
+export async function deleteLogOut(req, res){
+    console.log("oi");
+    const { authorization } = req.headers;
+    const token = authorization?.replace("Bearer ", "");
+
+    try {
+        await connection.query(
+          `
+          DELETE FROM session
+          WHERE token = $1
+          `,
+          [token]
+        );
+        res.sendStatus(200);
+      } catch (e) {
+        res.status(500).send(e);
+      }
+
+}

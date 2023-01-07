@@ -16,7 +16,6 @@ export async function authorization(req, res, next) {
     if (userExist.rowCount === 0) {
       return res.sendStatus(401);
     }
-    console.log(userExist.rows[0].idUser);
     const user = await connection.query(
       `
       SELECT * FROM users
