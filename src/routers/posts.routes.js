@@ -16,7 +16,7 @@ routes.post(
   postControllers.publishPost
 );
 
-routes.get("/posts", /* authorization,*/ postControllers.listPosts);
+routes.get("/posts", authorization, postControllers.listPosts);
 
 routes.post("/:idPost/like", postControllers.like);
 
