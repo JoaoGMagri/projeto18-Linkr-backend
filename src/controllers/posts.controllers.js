@@ -25,12 +25,21 @@ async function publishPost(req, res) {
 }
 
 async function listPosts(req, res) {
-  try {
-    const result = await postRepos.listPost();
+  const { rows: user } = res.locals.userExist;
 
-    return res.status(200).send(result.rows);
+  const idUser = user[0].idUser;
+  try {
+    const { rows: posts } = await postRepos.listPost(idUser);
+    const { rows: hashtags } = await hashtagRepos.getAllHashtags();
+
+    const result = {
+      posts,
+      hashtags,
+    };
+
+    return res.status(200).send(result);
   } catch (e) {
-    return res.status(500).send(e);
+    return res.status(500).send(e.message);
   }
 }
 
