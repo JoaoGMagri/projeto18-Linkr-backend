@@ -1,10 +1,11 @@
 import { connection } from "../database/database.js";
 
-async function insertPost({ url, text, idUser, createdAt }) {
+async function insertPost({ url, text, idUser }) {
+  console.log(idUser)
   return connection.query(
     `
     INSERT INTO 
-      "posts" (
+      posts (
         url,
         text,
         "idUser"
@@ -69,7 +70,9 @@ async function listPost(idUser) {
       users.image,
       up2."idUser"
     ORDER BY 
-      posts."idUser" DESC;`,
+      posts.id DESC
+    LIMIT 20;
+    `,
     [idUser]
   );
 }

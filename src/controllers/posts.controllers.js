@@ -1,15 +1,16 @@
 import { hashtagRepos } from "../repositories/hashtags.repos.js";
 import { postRepos } from "../repositories/posts.repos.js";
+import urlMetadata from "url-metadata";
 
 async function publishPost(req, res) {
   const { text, url, hashtags } = req.body;
   const { rows: user } = res.locals.userExist;
-
   const idUser = user[0].idUser;
   try {
     const body = { text, url, idUser };
 
     if (!!hashtags.length) {
+      console.log(text);
       hashtags.forEach(async (tag) => {
         const findTag = await hashtagRepos.findHashtag(tag);
         if (findTag.rowCount === 0) await hashtagRepos.insertHashtag(tag);
@@ -37,10 +38,42 @@ async function listPosts(req, res) {
       hashtags,
     };
 
-    return res.status(200).send(result);
+    const postData = await getPostsUrl(result.posts);
+    postData.push(hashtags);
+    return res.status(200).send(postData);
   } catch (e) {
     return res.status(500).send(e.message);
   }
+}
+
+async function getPostsUrl(result) {
+  let postsData = [];
+  for await (let post of result) {
+    let url = await getData(post.url);
+    postsData.push({ ...post, ...url });
+  }
+  return postsData;
+}
+
+async function getData(link) {
+  let data = {};
+  await urlMetadata(link).then(function (metadata) {
+    data.urlImage =
+      metadata.image === null
+        ? "https://cdn-icons-png.flaticon.com/512/3097/3097257.png"
+        : metadata.image;
+
+    data.urlTitle =
+      metadata.title === null
+        ? "Cannot load title information"
+        : metadata.title;
+
+    data.urlDescription =
+      metadata.description === ""
+        ? "Cannot load description information"
+        : metadata.description;
+  });
+  return data;
 }
 
 async function like(req, res) {
