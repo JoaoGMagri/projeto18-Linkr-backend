@@ -64,9 +64,23 @@ async function getPostsFromHashtag(name) {
     [name]
   );
 }
+async function addUsedHashtag({ idHashtag, idPost }) {
+  return connection.query(
+    `
+    INSERT INTO
+      "hashtagsPosts" (
+        "idHashtag",
+        "idPost"
+      )
+    VALUES ($1, $2);
+  `,
+    [idHashtag, idPost]
+  );
+}
 export const hashtagRepos = {
   findHashtag,
   insertHashtag,
   getAllHashtags,
   getPostsFromHashtag,
+  addUsedHashtag,
 };
