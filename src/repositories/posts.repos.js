@@ -1,10 +1,11 @@
 import { connection } from "../database/database.js";
 
-async function insertPost({ url, text, idUser, createdAt }) {
+async function insertPost({ url, text, idUser }) {
+  console.log(idUser);
   return connection.query(
     `
     INSERT INTO 
-      "posts" (
+      posts (
         url,
         text,
         "idUser"
@@ -69,7 +70,9 @@ async function listPost(idUser) {
       users.image,
       up2."idUser"
     ORDER BY 
-      posts."idUser" DESC;`,
+      posts.id DESC
+    LIMIT 20;
+    `,
     [idUser]
   );
 }
@@ -153,6 +156,23 @@ async function searchIdPost(idPost) {
     [idPost]
   );
 }
+async function searchPostByUser({ text, url, idUser }) {
+  return connection.query(
+    `
+    SELECT * FROM
+      posts
+    WHERE
+      url=$2
+    AND
+      text=$1
+    AND
+      "idUser"=$3
+    ORDER BY
+      "id" DESC;
+    `,
+    [text, url, idUser]
+  );
+}
 
 export const postRepos = {
   insertPost,
@@ -163,4 +183,5 @@ export const postRepos = {
   removePeopleWhoLiked,
   deletePostUser,
   searchIdPost,
+  searchPostByUser,
 };
