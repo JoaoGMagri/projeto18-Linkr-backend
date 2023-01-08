@@ -1,7 +1,7 @@
 import { connection } from "../database/database.js";
 
 async function insertPost({ url, text, idUser }) {
-  console.log(idUser)
+  console.log(idUser);
   return connection.query(
     `
     INSERT INTO 
@@ -156,6 +156,23 @@ async function searchIdPost(idPost) {
     [idPost]
   );
 }
+async function searchPostByUser({ text, url, idUser }) {
+  return connection.query(
+    `
+    SELECT * FROM
+      posts
+    WHERE
+      url=$2
+    AND
+      text=$1
+    AND
+      "idUser"=$3
+    ORDER BY
+      "id" DESC;
+    `,
+    [text, url, idUser]
+  );
+}
 
 export const postRepos = {
   insertPost,
@@ -166,4 +183,5 @@ export const postRepos = {
   removePeopleWhoLiked,
   deletePostUser,
   searchIdPost,
+  searchPostByUser,
 };

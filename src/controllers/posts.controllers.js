@@ -9,15 +9,23 @@ async function publishPost(req, res) {
   try {
     const body = { text, url, idUser };
 
+    await postRepos.insertPost(body);
+
+    const { rows: post } = await postRepos.searchPostByUser({ ...body });
+
     if (!!hashtags.length) {
-      console.log(text);
       hashtags.forEach(async (tag) => {
         const findTag = await hashtagRepos.findHashtag(tag);
-        if (findTag.rowCount === 0) await hashtagRepos.insertHashtag(tag);
+        if (findTag.rowCount === 0) {
+          await hashtagRepos.insertHashtag(tag);
+        }
+        const { rows: hashtag } = await hashtagRepos.findHashtag(tag);
+        await hashtagRepos.addUsedHashtag({
+          idHashtag: hashtag[0].id,
+          idPost: post[0].id,
+        });
       });
     }
-
-    await postRepos.insertPost(body);
 
     return res.status(201).send(body);
   } catch (e) {
@@ -33,14 +41,12 @@ async function listPosts(req, res) {
     const { rows: posts } = await postRepos.listPost(idUser);
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
 
+    // const { rows: postData } = await getPostsUrl(posts);
     const result = {
       posts,
       hashtags,
     };
-
-    const postData = await getPostsUrl(result.posts);
-    postData.push(hashtags);
-    return res.status(200).send(postData);
+    return res.status(200).send(result);
   } catch (e) {
     return res.status(500).send(e.message);
   }
@@ -119,9 +125,10 @@ async function dislike(req, res) {
 async function viewByHashtag(req, res) {
   const { hashtag } = req.params;
   try {
-    const posts = await hashtagRepos.getPostsFromHashtag(hashtag);
+    const { rows: posts } = await hashtagRepos.getPostsFromHashtag(hashtag);
+    const { rows: hashtags } = await hashtagRepos.getAllHashtags();
 
-    return res.status(200).send({ posts });
+    return res.status(200).send({ posts, hashtags });
   } catch (error) {
     return res.status(500).send(error.message);
   }
