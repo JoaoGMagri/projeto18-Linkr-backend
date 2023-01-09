@@ -18,9 +18,15 @@ routes.post(
 
 routes.get("/posts", authorization, postControllers.listPosts);
 
-routes.post("/:idPost/like", postControllers.like);
+routes.get(
+  "/posts/likes/:post",
+  authorization,
+  postControllers.viewLikesByPost
+);
 
-routes.post("/:idPost/dislike", postControllers.dislike);
+routes.post("/:idPost/like", authorization, postControllers.like);
+
+routes.post("/:idPost/dislike", authorization, postControllers.dislike);
 
 routes.delete(
   "/posts/:idPost",
