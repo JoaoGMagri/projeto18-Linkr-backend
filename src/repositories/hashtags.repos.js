@@ -43,11 +43,24 @@ async function getAllHashtags() {
       10;
   `);
 }
-async function getPostsFromHashtag(name) {
+async function getPostsFromHashtag({ idUser, hashtag }) {
   return connection.query(
     `
     SELECT
-      posts.*
+      posts.*,
+      COALESCE (
+        array_agg (
+          json_build_object (
+            'id', users.id,
+            'user', u.name
+          )
+        ) FILTER (where u.name is not null), ARRAY[]::json[] 
+      ) as likes,
+      CASE
+        WHEN $1 = ANY (array_agg(u.id)) THEN true
+      ELSE
+        false
+      END AS "userLiked"
     FROM
       posts
     INNER JOIN
@@ -55,13 +68,27 @@ async function getPostsFromHashtag(name) {
     ON
       posts.id="hashtagsPosts"."idPost"
     INNER JOIN
-      "hashtags"
+      hashtags
     ON
       hashtags.id="hashtagsPosts"."idHashtag"
+    LEFT JOIN 
+      users 
+    ON 
+      posts."idUser" = users.id
+      LEFT JOIN 
+      "usersPosts" likes
+    ON 
+      likes."idPost" = posts.id
+    LEFT JOIN 
+      users u
+    ON 
+      likes."idUser" = u.id
     WHERE
-      hashtags.name=$1;
+      hashtags.name=$2
+    GROUP BY 
+      posts.id;
   `,
-    [name]
+    [idUser, hashtag]
   );
 }
 async function addUsedHashtag({ idHashtag, idPost }) {
