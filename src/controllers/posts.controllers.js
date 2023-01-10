@@ -5,13 +5,17 @@ import urlMetadata from "url-metadata";
 async function publishPost(req, res) {
   const { text, url, hashtags } = req.body;
   const { rows: user } = res.locals.userExist;
+
   const idUser = user[0].idUser;
   try {
     const body = { text, url, idUser };
 
-    await postRepos.insertPost(body);
+    const { rows: post } = await postRepos.insertPost(body);
 
-    const { rows: post } = await postRepos.searchPostByUser({ ...body });
+    await postRepos.insertRepost({
+      idUser,
+      idPost: post[0].id,
+    });
 
     if (!!hashtags.length) {
       hashtags.forEach(async (tag) => {
@@ -19,9 +23,8 @@ async function publishPost(req, res) {
         if (findTag.rowCount === 0) {
           await hashtagRepos.insertHashtag(tag);
         }
-        const { rows: hashtag } = await hashtagRepos.findHashtag(tag);
         await hashtagRepos.addUsedHashtag({
-          idHashtag: hashtag[0].id,
+          idHashtag: findTag.rows[0].id,
           idPost: post[0].id,
         });
       });
