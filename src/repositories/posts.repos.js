@@ -1,7 +1,6 @@
 import { connection } from "../database/database.js";
 
 async function insertPost({ url, text, idUser }) {
-  console.log(idUser);
   return connection.query(
     `
     INSERT INTO 
@@ -15,21 +14,39 @@ async function insertPost({ url, text, idUser }) {
         $1, 
         $2, 
         $3
-      );
+      ) 
+    RETURNING id;
     `,
     [url, text, idUser]
+  );
+}
+async function insertRepost({ idUser, idPost }) {
+  return connection.query(
+    `
+    INSERT INTO 
+      "postsPosts" (
+        "idUser",
+        "idPost"
+      )
+    VALUES
+      (
+        $1, 
+        $2
+      );
+    `,
+    [idUser, idPost]
   );
 }
 async function listPost(idUser) {
   return connection.query(
     `
     SELECT
-      posts.id as "idPost",
+      posts.id,
       posts.url,
       posts.text,
-      posts."idUser",
-      users.name as username,
-      users.image,
+      posts."idUser" as "idCreator",
+      users.name as "createdBy",
+      users.image as "imageCreator",
       COALESCE (
         array_agg (
           json_build_object (
@@ -42,7 +59,17 @@ async function listPost(idUser) {
         WHEN $1 = ANY (array_agg(u.id)) THEN true
       ELSE
         false
-      END AS "userLiked"
+      END AS "userLiked",
+      CASE
+        WHEN $1 = ANY (array_agg("usersUsers"."idFollower")) THEN true
+      ELSE
+        false
+      END AS "follow",
+      CASE
+        WHEN posts.id = ANY (array_agg("postsPosts"."idPost")) THEN u2.name
+      ELSE
+        null
+      END AS "reposts"    
     FROM 
       posts
     LEFT JOIN 
@@ -57,12 +84,45 @@ async function listPost(idUser) {
       users u
     ON 
       likes."idUser" = u.id
+    LEFT JOIN 
+      "usersUsers" 
+    ON 
+      posts."idUser" = "usersUsers"."idUser"
+    LEFT JOIN 
+      "postsPosts" 
+    ON 
+      posts."id" = "postsPosts"."idPost"  
+    LEFT JOIN 
+      "users" u2 
+    ON 
+      u2."id" = "postsPosts"."idUser"
+    WHERE ((
+      CASE
+        WHEN $1 = "usersUsers"."idFollower" 
+          THEN 
+            true
+          ELSE
+            false
+        END
+    ) OR (
+      CASE
+        WHEN $1 = "usersUsers"."idUser" 
+          THEN 
+            true
+          ELSE
+            false
+        END
+    ))
     GROUP BY 
       posts.id,
       users.name,
-      users.image
+      users.image,
+      "postsPosts"."idUser",
+      u2.name,
+      "postsPosts"."createdAt"
     ORDER BY 
-      posts.id DESC
+      posts.id DESC,
+      "postsPosts"."createdAt" DESC
     LIMIT 20;
     `,
     [idUser]
@@ -206,4 +266,5 @@ export const postRepos = {
   searchIdPost,
   searchPostByUser,
   updatePostUser,
+  insertRepost,
 };
