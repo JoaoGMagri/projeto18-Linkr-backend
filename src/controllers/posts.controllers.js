@@ -32,7 +32,6 @@ async function publishPost(req, res) {
     return res.status(500).send(e);
   }
 }
-
 async function listPosts(req, res) {
   const { rows: user } = res.locals.userExist;
 
@@ -46,12 +45,12 @@ async function listPosts(req, res) {
       posts,
       hashtags,
     };
+    console.log(result.posts);
     return res.status(200).send(result);
   } catch (e) {
     return res.status(500).send(e.message);
   }
 }
-
 async function getPostsUrl(result) {
   let postsData = [];
   for await (let post of result) {
@@ -60,7 +59,6 @@ async function getPostsUrl(result) {
   }
   return postsData;
 }
-
 async function getData(link) {
   let data = {};
   await urlMetadata(link).then(function (metadata) {
@@ -81,34 +79,38 @@ async function getData(link) {
   });
   return data;
 }
-
 async function like(req, res) {
   const { idPost: id } = req.params;
   const { rows: user } = res.locals.userExist;
   try {
-    const postLike = await postRepos.addLike(id);
+    const postToLike = await postRepos.searchIdPost(id);
 
-    if (postLike.rowCount === 0) {
+    if (postToLike.rowCount === 0) {
       return res.sendStatus(400);
     }
+
+    console.log("user ", user[0].id);
+    console.log("post ", id);
 
     await postRepos.addPeopleWhoLiked({
       idUser: user[0].id,
       idPost: id,
     });
+    console.log("passou aqui, like");
 
     return res.sendStatus(201);
   } catch (e) {
-    return res.status(500).send();
+    return res.status(500).send(e.message);
   }
 }
 async function dislike(req, res) {
   const { idPost: id } = req.params;
   const { rows: user } = res.locals.userExist;
   try {
-    const postDislike = await postRepos.removeLike(id);
+    console.log("passou aqui, dislike");
+    const postToDislike = await postRepos.searchIdPost(id);
 
-    if (postDislike.rowCount === 0) {
+    if (postToDislike.rowCount === 0) {
       return res.sendStatus(400);
     }
 
@@ -119,13 +121,19 @@ async function dislike(req, res) {
 
     return res.sendStatus(201);
   } catch (e) {
-    return res.status(500).send();
+    return res.status(500).send(e);
   }
 }
 async function viewByHashtag(req, res) {
   const { hashtag } = req.params;
+  const { rows: user } = res.locals.userExist;
+
+  const idUser = user[0].idUser;
   try {
-    const { rows: posts } = await hashtagRepos.getPostsFromHashtag(hashtag);
+    const { rows: posts } = await hashtagRepos.getPostsFromHashtag({
+      idUser,
+      hashtag,
+    });
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
 
     return res.status(200).send({ posts, hashtags });
@@ -133,7 +141,6 @@ async function viewByHashtag(req, res) {
     return res.status(500).send(error.message);
   }
 }
-
 async function deletePost(req, res) {
   const { idPost: id } = req.params;
   try {
@@ -144,6 +151,18 @@ async function deletePost(req, res) {
     return res.sendStatus(500);
   }
 }
+async function viewLikesByPost(req, res) {
+  const { id: idPost } = req.params;
+  const { rows: user } = res.locals.userExist;
+
+  const idUser = user[0].idUser;
+  try {
+    const { rows: result } = await postRepos.getLikedBy({ idUser, idPost });
+    return res.status(200).send(result);
+  } catch (error) {
+    return res.status(500).send(error);
+  }
+}
 
 export const postControllers = {
   publishPost,
@@ -152,4 +171,5 @@ export const postControllers = {
   dislike,
   deletePost,
   viewByHashtag,
+  viewLikesByPost,
 };

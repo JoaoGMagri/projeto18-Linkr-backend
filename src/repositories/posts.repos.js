@@ -33,13 +33,13 @@ async function listPost(idUser) {
       COALESCE (
         array_agg (
           json_build_object (
-            'id', likes."idUser",
+            'id', users.id,
             'user', u.name
           )
-        ) FILTER (where likes."idUser" is not null), ARRAY[]::json[] 
+        ) FILTER (where u.name is not null), ARRAY[]::json[] 
       ) as likes,
       CASE
-        WHEN up2."idUser"=$1 THEN true
+        WHEN $1 = ANY (array_agg(u.id)) THEN true
       ELSE
         false
       END AS "userLiked"
@@ -57,50 +57,15 @@ async function listPost(idUser) {
       users u
     ON 
       likes."idUser" = u.id
-    LEFT JOIN 
-      "usersPosts" up2
-    ON 
-      up2."idPost" = posts.id
-    LEFT JOIN 
-      users u2
-    ON 
-      up2."idUser" = u2.id
     GROUP BY 
       posts.id,
       users.name,
-      users.image,
-      up2."idUser"
+      users.image
     ORDER BY 
       posts.id DESC
     LIMIT 20;
     `,
     [idUser]
-  );
-}
-async function addLike(id) {
-  return connection.query(
-    `
-    UPDATE
-      posts
-    SET
-      count: count + 1
-    WHERE
-      id:$1;
-  `,
-    [id]
-  );
-}
-async function removeLike(id) {
-  return connection.query(
-    `
-    UPDATE
-      posts
-    SET
-      count: count - 1
-    WHERE
-      id:$1;
-  `,
-    [id]
   );
 }
 async function addPeopleWhoLiked({ idUser, idPost }) {
@@ -109,13 +74,13 @@ async function addPeopleWhoLiked({ idUser, idPost }) {
     INSERT INTO
       "usersPosts" (
         "idUser",
-        "idPost",
+        "idPost"
       )
     VALUES
       (
         $1,
         $2
-      );
+    );
   `,
     [idUser, idPost]
   );
@@ -174,12 +139,51 @@ async function searchPostByUser({ text, url, idUser }) {
     [text, url, idUser]
   );
 }
-
+async function getLikedBy({ idUser, idPost }) {
+  return connection.query(
+    `
+    SELECT
+    COALESCE (
+      array_agg (
+        json_build_object (
+          'id', users.id,
+          'user', u.name
+        )
+      ) FILTER (where u.name is not null), ARRAY[]::json[] 
+    ) as likes,
+    CASE
+      WHEN $1 = ANY (array_agg(u.id)) THEN true
+    ELSE
+      false
+    END AS "userLiked"
+    FROM 
+      posts
+    LEFT JOIN 
+      users 
+    ON 
+      posts."idUser" = users.id
+    LEFT JOIN 
+      "usersPosts" likes
+    ON 
+      likes."idPost" = posts.id
+    LEFT JOIN 
+      users u
+    ON 
+      likes."idUser" = u.id
+    WHERE
+      posts.id=$2
+    GROUP BY 
+      users.name,
+      users.image
+    LIMIT 20;
+  `,
+    [idUser, idPost]
+  );
+}
 export const postRepos = {
   insertPost,
   listPost,
-  addLike,
-  removeLike,
+  getLikedBy,
   addPeopleWhoLiked,
   removePeopleWhoLiked,
   deletePostUser,

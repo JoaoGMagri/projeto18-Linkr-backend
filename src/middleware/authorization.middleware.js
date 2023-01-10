@@ -18,9 +18,9 @@ export async function authorization(req, res, next) {
     }
     const user = await connection.query(
       `
-      SELECT * FROM users
-      WHERE id = $1;
-      `,
+        SELECT * FROM users
+        WHERE id = $1;
+        `,
       [userExist.rows[0].idUser]
     );
 
