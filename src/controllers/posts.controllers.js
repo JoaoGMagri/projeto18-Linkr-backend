@@ -126,8 +126,14 @@ async function dislike(req, res) {
 }
 async function viewByHashtag(req, res) {
   const { hashtag } = req.params;
+  const { rows: user } = res.locals.userExist;
+
+  const idUser = user[0].idUser;
   try {
-    const { rows: posts } = await hashtagRepos.getPostsFromHashtag(hashtag);
+    const { rows: posts } = await hashtagRepos.getPostsFromHashtag({
+      idUser,
+      hashtag,
+    });
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
 
     return res.status(200).send({ posts, hashtags });

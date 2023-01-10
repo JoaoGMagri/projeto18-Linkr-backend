@@ -18,11 +18,11 @@ export async function urlValidation(req, res, next) {
 
 export async function deleteValidation(req, res, next) {
   const { idPost } = req.params;
-
   try {
     const idExists = postRepos.searchIdPost(idPost);
 
-    if (!idExists.rows) {
+    if (idExists.rowCount === 0) {
+      console.log("Cai no middleware");
       return res.sendStatus(404);
     }
   } catch (e) {
