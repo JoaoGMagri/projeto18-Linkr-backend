@@ -240,6 +240,22 @@ async function getLikedBy({ idUser, idPost }) {
     [idUser, idPost]
   );
 }
+
+async function updatePostUser({ idPost, data }) {
+  console.log(idPost, data);
+  return connection.query(
+    `
+      UPDATE 
+        posts 
+      SET
+        text=$1
+      WHERE
+        id=$2;
+    `,
+    [data, idPost]
+  );
+}
+
 export const postRepos = {
   insertPost,
   listPost,
@@ -249,5 +265,6 @@ export const postRepos = {
   deletePostUser,
   searchIdPost,
   searchPostByUser,
+  updatePostUser,
   insertRepost,
 };

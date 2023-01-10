@@ -157,10 +157,9 @@ async function deletePost(req, res) {
   const { idPost: id } = req.params;
   try {
     await postRepos.deletePostUser(id);
-    console.log("Tá no controller");
     return res.sendStatus(200);
-  } catch (e) {
-    return res.sendStatus(500);
+  } catch (error) {
+    return res.status(500).send(error);
   }
 }
 async function viewLikesByPost(req, res) {
@@ -176,6 +175,18 @@ async function viewLikesByPost(req, res) {
   }
 }
 
+async function updatePost(req, res) {
+  const { idPost } = req.params;
+  const { data } = req.body;
+
+  try {
+    await postRepos.updatePostUser({ idPost, data });
+    return res.status(200).send(data);
+  } catch (error) {
+    return res.status(500).send(error);
+  }
+}
+
 export const postControllers = {
   publishPost,
   listPosts,
@@ -185,4 +196,5 @@ export const postControllers = {
   viewByHashtag,
   viewLikesByPost,
   getData,
+  updatePost,
 };

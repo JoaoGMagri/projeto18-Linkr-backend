@@ -4,11 +4,11 @@ import { postControllers } from "../controllers/posts.controllers.js";
 import { authorization } from "../middleware/authorization.middleware.js";
 import {
   deleteValidation,
+  updateValidation,
   urlValidation,
 } from "../middleware/posts.middleware.js";
 
 const routes = express.Router();
-
 routes.post(
   "/posts",
   authorization,
@@ -36,5 +36,6 @@ routes.delete(
 );
 
 routes.post("/metadata", postControllers.getData)
+routes.put("/posts/:idPost", updateValidation, postControllers.updatePost);
 
 export default routes;
