@@ -89,7 +89,10 @@ async function getPostsFromHashtag({ idUser, hashtag }) {
     WHERE
       hashtags.name=$2
     GROUP BY 
-      posts.id;
+      posts.id,
+      users.name,
+      users.image,
+      users.id;
   `,
     [idUser, hashtag]
   );
