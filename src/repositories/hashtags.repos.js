@@ -47,10 +47,12 @@ async function getPostsFromHashtag({ idUser, hashtag }) {
   return connection.query(
     `
     SELECT
-      posts.*,
-      users.name,
-      users.image,
-      users.id,
+      posts.id,
+      posts.url,
+      posts.text,
+      posts."idUser" as "idCreator",
+      users.name as "createdBy",
+      users.image as "imageCreator",
       COALESCE (
         array_agg (
           json_build_object (
@@ -63,9 +65,21 @@ async function getPostsFromHashtag({ idUser, hashtag }) {
         WHEN $1 = ANY (array_agg(u.id)) THEN true
       ELSE
         false
-      END AS "userLiked"
+      END AS "userLiked",
+      CASE
+        WHEN $1 = ANY (array_agg("usersUsers"."idFollower")) THEN true
+      ELSE
+        false
+      END AS "follow",
+      CASE
+        WHEN posts.id = ANY (array_agg("postsPosts"."idPost")) THEN u2.name
+      ELSE
+        null
+      END AS "reposts"
     FROM
       posts
+
+
     INNER JOIN
       "hashtagsPosts"
     ON
@@ -86,13 +100,28 @@ async function getPostsFromHashtag({ idUser, hashtag }) {
       users u
     ON 
       likes."idUser" = u.id
+
+    LEFT JOIN 
+      "usersUsers" 
+    ON 
+      posts."idUser" = "usersUsers"."idUser"
+    LEFT JOIN 
+      "postsPosts" 
+    ON 
+      posts."id" = "postsPosts"."idPost"  
+    LEFT JOIN 
+      "users" u2 
+    ON 
+      u2."id" = "postsPosts"."idUser"
+
+
     WHERE
       hashtags.name=$2
     GROUP BY 
       posts.id,
       users.name,
       users.image,
-      users.id;
+      u2.name;
   `,
     [idUser, hashtag]
   );

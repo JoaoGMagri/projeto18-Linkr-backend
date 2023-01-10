@@ -4,10 +4,12 @@ async function getAllPostsUsers({ idUser, id }) {
   return connection.query(
     `
     SELECT
-      posts.*,
-      u1.name,
-      u1.image,
-      u1.id,
+      posts.id,
+      posts.url,
+      posts.text,
+      posts."idUser" as "idCreator",
+      u1.name as "createdBy",
+      u1.image as "imageCreator",
       COALESCE (
         array_agg (
           json_build_object (
@@ -20,9 +22,22 @@ async function getAllPostsUsers({ idUser, id }) {
         WHEN $1 = ANY (array_agg(u3.id)) THEN true
       ELSE
         false
-      END AS "userLiked"
+      END AS "userLiked",
+      CASE
+        WHEN $1 = ANY (array_agg("usersUsers"."idFollower")) THEN true
+      ELSE
+        false
+      END AS "follow",
+      CASE
+        WHEN posts.id = ANY (array_agg("postsPosts"."idPost")) THEN u4.name
+      ELSE
+        null
+      END AS "reposts"
     FROM
       posts
+
+
+    
     INNER JOIN
       users u1
     ON
@@ -39,13 +54,30 @@ async function getAllPostsUsers({ idUser, id }) {
       users u3
     ON 
       likes."idUser" = u3.id
+
+    LEFT JOIN 
+      "usersUsers" 
+    ON 
+      posts."idUser" = "usersUsers"."idUser"
+    LEFT JOIN 
+      "postsPosts" 
+    ON 
+      posts."id" = "postsPosts"."idPost"  
+    LEFT JOIN 
+      "users" u4 
+    ON 
+      u4."id" = "postsPosts"."idUser"
+
     WHERE
       u1.id=$2
     GROUP BY 
       posts.id,
       u1.name,
       u1.image,
-      u1.id;
+      u2.name,
+      u4.name
+    ORDER BY
+      posts.id DESC;
   `,
     [idUser, id]
   );
