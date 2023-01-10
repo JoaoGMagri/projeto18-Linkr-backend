@@ -48,6 +48,9 @@ async function getPostsFromHashtag({ idUser, hashtag }) {
     `
     SELECT
       posts.*,
+      users.name,
+      users.image,
+      users.id,
       COALESCE (
         array_agg (
           json_build_object (
