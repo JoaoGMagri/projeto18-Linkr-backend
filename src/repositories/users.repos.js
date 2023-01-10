@@ -5,6 +5,9 @@ async function getAllPostsUsers({ idUser, id }) {
     `
     SELECT
       posts.*,
+      u1.name,
+      u1.image,
+      u1.id,
       COALESCE (
         array_agg (
           json_build_object (
@@ -39,7 +42,10 @@ async function getAllPostsUsers({ idUser, id }) {
     WHERE
       u1.id=$2
     GROUP BY 
-      posts.id;
+      posts.id,
+      u1.name,
+      u1.image,
+      u1.id;
   `,
     [idUser, id]
   );
