@@ -92,11 +92,11 @@ async function like(req, res) {
       return res.sendStatus(400);
     }
 
-    console.log("user ", user[0].id);
+    console.log("user ", user[0].idUser);
     console.log("post ", id);
 
     await postRepos.addPeopleWhoLiked({
-      idUser: user[0].id,
+      idUser: user[0].idUser,
       idPost: id,
     });
     console.log("passou aqui, like");
@@ -118,7 +118,7 @@ async function dislike(req, res) {
     }
 
     await postRepos.removePeopleWhoLiked({
-      idUser: user[0].id,
+      idUser: user[0].idUser,
       idPost: id,
     });
 
