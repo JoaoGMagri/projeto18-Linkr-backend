@@ -22,7 +22,20 @@ export async function deleteValidation(req, res, next) {
     const idExists = postRepos.searchIdPost(idPost);
 
     if (idExists.rowCount === 0) {
-      console.log("Cai no middleware");
+      return res.sendStatus(404);
+    }
+  } catch (e) {
+    return console.log(e), res.sendStatus(500);
+  }
+  next();
+}
+
+export async function updateValidation(req, res, next) {
+  const { idPost } = req.params;
+
+  try {
+    const idExists = await postRepos.searchIdPost(idPost);
+    if (idExists.rowCount === 0) {
       return res.sendStatus(404);
     }
   } catch (e) {
