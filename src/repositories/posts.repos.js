@@ -24,6 +24,7 @@ async function listPost(idUser) {
   return connection.query(
     `
     SELECT
+      posts.id as "idPost",
       posts.url,
       posts.text,
       posts."idUser",

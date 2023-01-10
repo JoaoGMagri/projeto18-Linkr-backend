@@ -24,7 +24,7 @@ routes.post("/:idPost/dislike", postControllers.dislike);
 
 routes.delete(
   "/posts/:idPost",
-  authorization,
+  // authorization,
   deleteValidation,
   postControllers.deletePost
 );
