@@ -35,4 +35,6 @@ routes.delete(
   postControllers.deletePost
 );
 
+routes.post("/metadata", postControllers.getData)
+
 export default routes;
