@@ -54,33 +54,42 @@ async function listPosts(req, res) {
     return res.status(500).send(e.message);
   }
 }
-async function getPostsUrl(result) {
+/* async function getPostsUrl(result) {
   let postsData = [];
   for await (let post of result) {
     let url = await getData(post.url);
     postsData.push({ ...post, ...url });
   }
   return postsData;
-}
-async function getData(link) {
+} */
+async function getData(req, res) {
+  console.log(req.body)
+  const {link} = req.body;
   let data = {};
-  await urlMetadata(link).then(function (metadata) {
-    data.urlImage =
-      metadata.image === null
-        ? "https://cdn-icons-png.flaticon.com/512/3097/3097257.png"
-        : metadata.image;
+  try {
+    await urlMetadata(link).then(function (metadata) {
+      
+      data.urlImage =
+        metadata.image === ""
+          ? "https://static.vecteezy.com/ti/vetor-gratis/t2/7126739-icone-de-ponto-de-interrogacao-gratis-vetor.jpg"
+          : metadata.image;
+  
+      data.urlTitle =
+        metadata.title === null
+          ? "Cannot load title information"
+          : metadata.title;
+  
+      data.urlDescription =
+        metadata.description === ""
+          ? "Cannot load description information"
+          : metadata.description;
 
-    data.urlTitle =
-      metadata.title === null
-        ? "Cannot load title information"
-        : metadata.title;
-
-    data.urlDescription =
-      metadata.description === ""
-        ? "Cannot load description information"
-        : metadata.description;
-  });
-  return data;
+    });
+    return res.send(data);
+    
+  } catch (error) {
+    return res.sendStatus(500);
+  }
 }
 async function like(req, res) {
   const { idPost: id } = req.params;
@@ -186,5 +195,6 @@ export const postControllers = {
   deletePost,
   viewByHashtag,
   viewLikesByPost,
+  getData,
   updatePost,
 };
