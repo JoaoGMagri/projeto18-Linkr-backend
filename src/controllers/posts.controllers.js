@@ -1,6 +1,7 @@
 import { hashtagRepos } from "../repositories/hashtags.repos.js";
 import { postRepos } from "../repositories/posts.repos.js";
 import urlMetadata from "url-metadata";
+import { usersRepos } from "../repositories/users.repos.js";
 
 async function publishPost(req, res) {
   const { text, url, hashtags } = req.body;
@@ -39,16 +40,20 @@ async function listPosts(req, res) {
   const { rows: user } = res.locals.userExist;
 
   const idUser = user[0].idUser;
+  console.log(user[0]);
   try {
     const { rows: posts } = await postRepos.listPost(idUser);
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
+    const { rows: users } = await usersRepos.getAllUser(idUser);
 
+    console.log(users);
     // const { rows: postData } = await getPostsUrl(posts);
     const result = {
       posts,
       hashtags,
+      users,
     };
-    console.log(result.posts);
+    // console.log(result.posts);
     return res.status(200).send(result);
   } catch (e) {
     return res.status(500).send(e.message);
@@ -63,29 +68,27 @@ async function listPosts(req, res) {
   return postsData;
 } */
 async function getData(req, res) {
-  const {link} = req.body;
+  // console.log(req.body);
+  const { link } = req.body;
   let data = {};
   try {
     await urlMetadata(link).then(function (metadata) {
-      
       data.urlImage =
         metadata.image === ""
           ? "https://static.vecteezy.com/ti/vetor-gratis/t2/7126739-icone-de-ponto-de-interrogacao-gratis-vetor.jpg"
           : metadata.image;
-  
+
       data.urlTitle =
         metadata.title === null
           ? "Cannot load title information"
           : metadata.title;
-  
+
       data.urlDescription =
         metadata.description === ""
           ? "Cannot load description information"
           : metadata.description;
-
     });
     return res.send(data);
-    
   } catch (error) {
     return res.sendStatus(500);
   }
@@ -147,7 +150,9 @@ async function viewByHashtag(req, res) {
     });
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
 
-    return res.status(200).send({ posts, hashtags });
+    const { rows: users } = await usersRepos.getAllUser(idUser);
+
+    return res.status(200).send({ posts, hashtags, users });
   } catch (error) {
     return res.status(500).send(error.message);
   }
