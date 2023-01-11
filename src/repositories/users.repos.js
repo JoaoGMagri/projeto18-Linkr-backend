@@ -137,7 +137,7 @@ async function getFollow(id, idUsers) {
         "usersUsers".id;
     `,
     [id, idUsers]
-  )
+  );
 }
 
 async function createFollow(id, idUsers) {
@@ -150,7 +150,7 @@ async function createFollow(id, idUsers) {
       RETURNING id;
     `,
     [id, idUsers]
-  )
+  );
 }
 
 async function deleteFollow(id) {
@@ -162,8 +162,7 @@ async function deleteFollow(id) {
         id = $1;
     `,
     [id]
-  )
-
+  );
 }
 export const usersRepos = {
   getUser,
@@ -171,5 +170,5 @@ export const usersRepos = {
   getAllPostsUsers,
   getFollow,
   createFollow,
-  deleteFollow
+  deleteFollow,
 };
