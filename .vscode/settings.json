@@ -1,0 +1,16 @@
+{   
+"editor.codeActionsOnSave": {     
+    "source.fixAll.eslint": true     
+    //"source.organizeImports": true   
+},   
+"editor.defaultFormatter": "esbenp.prettier-vscode",   
+"editor.fontLigatures": true,   
+"editor.fontSize": 18,   
+"editor.formatOnSave": true,   
+"editor.lineHeight": 26,   
+"editor.linkedEditing": true,   
+"editor.tabSize": 2,   
+"editor.renderLineHighlight": "gutter",   
+"editor.rulers": [80, 120],   
+"editor.suggestSelection": "first" 
+}

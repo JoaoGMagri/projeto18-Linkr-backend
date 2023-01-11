@@ -124,8 +124,52 @@ async function getUser(id) {
   );
 }
 
+async function getFollow(id, idUsers) {
+  return connection.query(
+    `
+      SELECT
+      "usersUsers".id
+      FROM
+        "usersUsers"
+      WHERE
+        "idUser"=$1 AND "idFollower"=$2
+      GROUP BY
+        "usersUsers".id;
+    `,
+    [id, idUsers]
+  )
+}
+
+async function createFollow(id, idUsers) {
+  return connection.query(
+    `
+      INSERT INTO
+        "usersUsers"("idUser", "idFollower")
+      VALUES
+        ($1, $2)
+      RETURNING id;
+    `,
+    [id, idUsers]
+  )
+}
+
+async function deleteFollow(id) {
+  connection.query(
+    `
+      DELETE FROM
+        "usersUsers"
+      WHERE
+        id = $1;
+    `,
+    [id]
+  )
+
+}
 export const usersRepos = {
   getUser,
   getAllUser,
   getAllPostsUsers,
+  getFollow,
+  createFollow,
+  deleteFollow
 };
