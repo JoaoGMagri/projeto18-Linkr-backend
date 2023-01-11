@@ -63,7 +63,6 @@ async function listPosts(req, res) {
   return postsData;
 } */
 async function getData(req, res) {
-  console.log(req.body)
   const {link} = req.body;
   let data = {};
   try {
