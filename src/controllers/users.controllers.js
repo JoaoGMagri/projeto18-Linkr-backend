@@ -13,11 +13,14 @@ async function viewAllPostsByUser(req, res) {
     const { rows: posts } = await usersRepos.getAllPostsUsers({ idUser, id });
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
 
+    const { rows: users } = await usersRepos.getAllUser(idUser);
+
     delete user.password;
 
     const result = {
       posts,
       hashtags,
+      users,
       user,
     };
     return res.status(200).send(result);

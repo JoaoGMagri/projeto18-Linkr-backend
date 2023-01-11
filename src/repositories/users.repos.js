@@ -82,13 +82,33 @@ async function getAllPostsUsers({ idUser, id }) {
     [idUser, id]
   );
 }
-async function getAllUser() {
-  return connection.query(`
+async function getAllUser(idUser) {
+  return connection.query(
+    `
     SELECT
-      *
+      users.id,
+      users.name,
+      users.image,
+      CASE
+        WHEN $1 = ANY (array_agg(uu."idFollower")) 
+          THEN true
+          ELSE false
+        END as follow
     FROM
-      users;
-  `);
+      users
+    LEFT JOIN
+      "usersUsers" uu
+    ON
+      uu."idUser" = users.id
+    WHERE
+      users.id<>$1
+    GROUP BY
+      users.id
+    ORDER BY
+      follow DESC;
+  `,
+    [idUser]
+  );
 }
 async function getUser(id) {
   return connection.query(
