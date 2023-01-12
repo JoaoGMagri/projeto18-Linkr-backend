@@ -20,11 +20,13 @@ async function publishPost(req, res) {
     if (!!hashtags.length) {
       hashtags.forEach(async (tag) => {
         const findTag = await hashtagRepos.findHashtag(tag);
+        let id = findTag.rows[0].id;
         if (findTag.rowCount === 0) {
-          await hashtagRepos.insertHashtag(tag);
+          const { rows: tag } = await hashtagRepos.insertHashtag(tag);
+          id = tag[0].id;
         }
         await hashtagRepos.addUsedHashtag({
-          idHashtag: findTag.rows[0].id,
+          idHashtag: id,
           idPost: post[0].id,
         });
       });
@@ -36,11 +38,23 @@ async function publishPost(req, res) {
   }
 }
 async function listPosts(req, res) {
+  const { page } = req.query;
   const { rows: user } = res.locals.userExist;
 
   const idUser = user[0].idUser;
+  let offsetPages;
+
+  switch (page) {
+    case "1":
+    case undefined:
+      offsetPages = 0;
+      break;
+    default:
+      offsetPages = (page - 1) * 10;
+      break;
+  }
   try {
-    const { rows: posts } = await postRepos.listPost(idUser);
+    const { rows: posts } = await postRepos.listPost(idUser, offsetPages);
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
 
     // const { rows: postData } = await getPostsUrl(posts);
@@ -48,44 +62,34 @@ async function listPosts(req, res) {
       posts,
       hashtags,
     };
-    console.log(result.posts);
     return res.status(200).send(result);
   } catch (e) {
+    console.log(e.message);
     return res.status(500).send(e.message);
   }
 }
-/* async function getPostsUrl(result) {
-  let postsData = [];
-  for await (let post of result) {
-    let url = await getData(post.url);
-    postsData.push({ ...post, ...url });
-  }
-  return postsData;
-} */
+
 async function getData(req, res) {
-  const {link} = req.body;
+  const { link } = req.body;
   let data = {};
   try {
     await urlMetadata(link).then(function (metadata) {
-      
       data.urlImage =
         metadata.image === ""
           ? "https://static.vecteezy.com/ti/vetor-gratis/t2/7126739-icone-de-ponto-de-interrogacao-gratis-vetor.jpg"
           : metadata.image;
-  
+
       data.urlTitle =
         metadata.title === null
           ? "Cannot load title information"
           : metadata.title;
-  
+
       data.urlDescription =
         metadata.description === ""
           ? "Cannot load description information"
           : metadata.description;
-
     });
     return res.send(data);
-    
   } catch (error) {
     return res.sendStatus(500);
   }
