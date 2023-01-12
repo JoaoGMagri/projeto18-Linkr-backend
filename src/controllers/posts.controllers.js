@@ -1,6 +1,7 @@
 import { hashtagRepos } from "../repositories/hashtags.repos.js";
 import { postRepos } from "../repositories/posts.repos.js";
 import urlMetadata from "url-metadata";
+import { usersRepos } from "../repositories/users.repos.js";
 
 async function publishPost(req, res) {
   const { text, url, hashtags } = req.body;
@@ -56,11 +57,14 @@ async function listPosts(req, res) {
   try {
     const { rows: posts } = await postRepos.listPost(idUser, offsetPages);
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
+    const { rows: users } = await usersRepos.getAllUser(idUser);
 
+    console.log(users);
     // const { rows: postData } = await getPostsUrl(posts);
     const result = {
       posts,
       hashtags,
+      users,
     };
     return res.status(200).send(result);
   } catch (e) {
@@ -151,7 +155,9 @@ async function viewByHashtag(req, res) {
     });
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
 
-    return res.status(200).send({ posts, hashtags });
+    const { rows: users } = await usersRepos.getAllUser(idUser);
+
+    return res.status(200).send({ posts, hashtags, users });
   } catch (error) {
     return res.status(500).send(error.message);
   }

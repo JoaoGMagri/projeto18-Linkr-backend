@@ -11,14 +11,18 @@ async function viewAllPostsByUser(req, res) {
     } = await usersRepos.getUser(id);
     const { rows: posts } = await usersRepos.getAllPostsUsers({ idUser, id });
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
-    const follow = await usersRepos.getFollow(id, idUser);
+
+    const { rows: users } = await usersRepos.getAllUser(idUser);
+
+    const { rows: follow } = await usersRepos.getFollow(id, idUser);
     delete user.password;
 
     const result = {
       posts,
       hashtags,
+      users,
       user,
-      follow: follow.rows[0],
+      follow: follow[0],
     };
     return res.status(200).send(result);
   } catch (error) {
@@ -36,7 +40,7 @@ async function follow(req, res) {
     if (follow.rowCount !== 0) {
       return res.sendStatus(400);
     }
-    const result = await usersRepos.createFollow(id, idUser)
+    const result = await usersRepos.createFollow(id, idUser);
     return res.send(result.rows[0]).status(200);
   } catch (error) {
     console.log(error);
@@ -54,7 +58,7 @@ async function unfollow(req, res) {
     if (follow.rowCount !== 0) {
       return res.sendStatus(400);
     }
-    await usersRepos.deleteFollow(id)
+    await usersRepos.deleteFollow(id);
     return res.sendStatus(200);
   } catch (error) {
     console.log(error);
@@ -65,5 +69,5 @@ async function unfollow(req, res) {
 export const usersControllers = {
   viewAllPostsByUser,
   follow,
-  unfollow
+  unfollow,
 };
