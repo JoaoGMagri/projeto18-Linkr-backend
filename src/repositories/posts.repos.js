@@ -288,7 +288,7 @@ async function updatePostUser({ idPost, data }) {
     [data, idPost]
   );
 }
-async function verifyMostRecentPost(idUser, datetime) {
+async function verifyMostRecentPost(idUser, id) {
   return connection.query(
     `
     WITH cti AS (
@@ -395,11 +395,11 @@ async function verifyMostRecentPost(idUser, datetime) {
         WHERE
           whofollow."idFollower" = $1
         ))
-      AND
-       posts."createdAt" > $2
-      AND
-       reposts."createdAt" > $2
-      )
+      AND (
+       posts.id > $2
+      OR
+       reposts."idPost" > $2
+      ))
     GROUP BY
       posts.id,
       creator.name,
@@ -412,7 +412,7 @@ async function verifyMostRecentPost(idUser, datetime) {
       posts.id DESC,
       reposts."createdAt" DESC;
     `,
-    [idUser, datetime]
+    [idUser, id]
   );
 }
 
