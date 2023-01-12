@@ -2,14 +2,31 @@ import { hashtagRepos } from "../repositories/hashtags.repos.js";
 import { usersRepos } from "../repositories/users.repos.js";
 
 async function viewAllPostsByUser(req, res) {
+  const { page } = req.query;
   const { id } = req.params;
   const { rows: user } = res.locals.userExist;
+
   const idUser = user[0].idUser;
+  let offsetPages;
+
+  switch (page) {
+    case "1":
+    case undefined:
+      offsetPages = 0;
+      break;
+    default:
+      offsetPages = (page - 1) * 10;
+      break;
+  }
   try {
     const {
       rows: [user],
     } = await usersRepos.getUser(id);
-    const { rows: posts } = await usersRepos.getAllPostsUsers({ idUser, id });
+    const { rows: posts } = await usersRepos.getAllPostsUsers({
+      idUser,
+      id,
+      offset: offsetPages,
+    });
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
 
     const { rows: users } = await usersRepos.getAllUser(idUser);
