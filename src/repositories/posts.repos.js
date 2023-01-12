@@ -37,95 +37,127 @@ async function insertRepost({ idUser, idPost }) {
     [idUser, idPost]
   );
 }
-async function listPost(idUser) {
+async function listPost(idUser, offset) {
   return connection.query(
     `
+    WITH cti AS (
+      SELECT
+        posts.id,
+        COUNT(reposts."idPost") as count
+      FROM
+        posts
+      LEFT JOIN
+        "postsPosts" reposts
+      ON
+        posts.id = reposts."idPost"
+      GROUP BY
+        posts.id
+    ),
+    cte AS (
+      SELECT
+        posts.id,
+        CASE 
+        WHEN $1 = ANY (array_agg(followers."idFollower")) 
+          THEN true
+          ELSE false
+        END as follow
+      FROM
+        posts
+      LEFT JOIN
+        "usersUsers" followers
+      ON
+        posts."idUser" = followers."idUser"
+      GROUP BY
+        posts.id
+    )
     SELECT
       posts.id,
       posts.url,
       posts.text,
       posts."idUser" as "idCreator",
-      users.name as "createdBy",
-      users.image as "imageCreator",
+      creator.name as "createdBy",
+      creator.image as "imageCreator",
       COALESCE (
         array_agg (
           json_build_object (
-            'id', users.id,
-            'user', u.name
+            'id', wholiked.id,
+            'user', wholiked.name
           )
-        ) FILTER (where u.name is not null), ARRAY[]::json[] 
+        ) FILTER (where wholiked.name is not null), ARRAY[]::json[] 
       ) as likes,
-      CASE
-        WHEN $1 = ANY (array_agg(u.id)) THEN true
-      ELSE
-        false
-      END AS "userLiked",
-      CASE
-        WHEN $1 = ANY (array_agg("usersUsers"."idFollower")) THEN true
-      ELSE
-        false
-      END AS "follow",
-      CASE
-        WHEN posts.id = ANY (array_agg("postsPosts"."idPost")) THEN u2.name
-      ELSE
-        null
-      END AS "reposts"    
+      CASE WHEN $1 = ANY (array_agg(wholiked.id)) 
+        THEN true
+        ELSE false 
+        END 
+      as "userLiked",
+      cte.follow,
+      cti.count,
+      CASE WHEN posts.id = ANY (array_agg(reposts."idPost"))
+        THEN whorepost.name
+        ELSE null
+        END 
+      as reposts  
     FROM 
       posts
-    LEFT JOIN 
-      users 
-    ON 
-      posts."idUser" = users.id
-    LEFT JOIN 
+    JOIN cte ON cte.id = posts.id
+    JOIN cti ON cti.id = posts.id
+    LEFT JOIN
+      users creator
+    ON
+      posts."idUser" = creator.id
+    LEFT JOIN
       "usersPosts" likes
-    ON 
-      likes."idPost" = posts.id
-    LEFT JOIN 
-      users u
-    ON 
-      likes."idUser" = u.id
-    LEFT JOIN 
-      "usersUsers" 
-    ON 
-      posts."idUser" = "usersUsers"."idUser"
-    LEFT JOIN 
-      "postsPosts" 
-    ON 
-      posts."id" = "postsPosts"."idPost"  
-    LEFT JOIN 
-      "users" u2 
-    ON 
-      u2."id" = "postsPosts"."idUser"
-    WHERE ((
-      CASE
-        WHEN $1 = "usersUsers"."idFollower" 
-          THEN 
-            true
-          ELSE
-            false
-        END
-    ) OR (
-      CASE
-        WHEN $1 = "usersUsers"."idUser" 
-          THEN 
-            true
-          ELSE
-            false
-        END
-    ))
-    GROUP BY 
+    ON
+      posts.id = likes."idPost"
+    LEFT JOIN
+      users wholiked
+    ON
+      likes."idUser" = wholiked.id
+    LEFT JOIN
+      "usersUsers" followers
+    ON
+      posts."idUser" = followers."idUser"
+    LEFT JOIN
+      "postsPosts" reposts
+    ON
+      posts.id = reposts."idPost"
+    LEFT JOIN
+      users whorepost
+    ON
+      reposts."idUser" = whorepost.id
+    WHERE 
+      (
+      cte.follow = true 
+      OR 
+      whorepost.id = $1
+      OR 
+      whorepost.id IN (
+        SELECT 
+          whofollow."idUser"
+        FROM
+          "postsPosts" reposts
+        LEFT JOIN
+          "usersUsers" whofollow
+        ON
+          reposts."idUser" = whofollow."idUser"
+        WHERE
+          whofollow."idFollower" = $1
+        )
+      )
+    GROUP BY
       posts.id,
-      users.name,
-      users.image,
-      "postsPosts"."idUser",
-      u2.name,
-      "postsPosts"."createdAt"
-    ORDER BY 
+      creator.name,
+      creator.image,
+      whorepost.name,
+      cte.follow,
+      cti.count,
+      reposts."createdAt"
+    ORDER BY
       posts.id DESC,
-      "postsPosts"."createdAt" DESC
-    LIMIT 20;
+      reposts."createdAt" DESC
+    LIMIT 10 OFFSET $2;
     `,
-    [idUser]
+    [idUser, offset]
   );
 }
 async function addPeopleWhoLiked({ idUser, idPost }) {

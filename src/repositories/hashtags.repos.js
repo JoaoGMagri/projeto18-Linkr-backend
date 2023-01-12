@@ -20,7 +20,8 @@ async function insertHashtag(name) {
       hashtags (
         name
       )
-    VALUES ($1);
+    VALUES ($1)
+    RETUNNING id;
   `,
     [name]
   );
