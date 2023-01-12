@@ -74,6 +74,7 @@ async function listPost(idUser, offset) {
       posts.id,
       posts.url,
       posts.text,
+      posts."createdAt",
       posts."idUser" as "idCreator",
       creator.name as "createdBy",
       creator.image as "imageCreator",
@@ -287,6 +288,133 @@ async function updatePostUser({ idPost, data }) {
     [data, idPost]
   );
 }
+async function verifyMostRecentPost(idUser, datetime) {
+  return connection.query(
+    `
+    WITH cti AS (
+      SELECT
+        posts.id,
+        COUNT(reposts."idPost") as count
+      FROM
+        posts
+      LEFT JOIN
+        "postsPosts" reposts
+      ON
+        posts.id = reposts."idPost"
+      GROUP BY
+        posts.id
+    ),
+    cte AS (
+      SELECT
+        posts.id,
+        CASE 
+        WHEN $1 = ANY (array_agg(followers."idFollower")) 
+          THEN true
+          ELSE false
+        END as follow
+      FROM
+        posts
+      LEFT JOIN
+        "usersUsers" followers
+      ON
+        posts."idUser" = followers."idUser"
+      GROUP BY
+        posts.id
+    )
+    SELECT
+      posts.id,
+      posts.url,
+      posts.text,
+      posts."createdAt",
+      posts."idUser" as "idCreator",
+      creator.name as "createdBy",
+      creator.image as "imageCreator",
+      COALESCE (
+        array_agg (
+          json_build_object (
+            'id', wholiked.id,
+            'user', wholiked.name
+          )
+        ) FILTER (where wholiked.name is not null), ARRAY[]::json[] 
+      ) as likes,
+      CASE WHEN $1 = ANY (array_agg(wholiked.id)) 
+        THEN true
+        ELSE false 
+        END 
+      as "userLiked",
+      cte.follow,
+      cti.count,
+      CASE WHEN posts.id = ANY (array_agg(reposts."idPost"))
+        THEN whorepost.name
+        ELSE null
+        END 
+      as reposts  
+    FROM 
+      posts
+    JOIN cte ON cte.id = posts.id
+    JOIN cti ON cti.id = posts.id
+    LEFT JOIN
+      users creator
+    ON
+      posts."idUser" = creator.id
+    LEFT JOIN
+      "usersPosts" likes
+    ON
+      posts.id = likes."idPost"
+    LEFT JOIN
+      users wholiked
+    ON
+      likes."idUser" = wholiked.id
+    LEFT JOIN
+      "usersUsers" followers
+    ON
+      posts."idUser" = followers."idUser"
+    LEFT JOIN
+      "postsPosts" reposts
+    ON
+      posts.id = reposts."idPost"
+    LEFT JOIN
+      users whorepost
+    ON
+      reposts."idUser" = whorepost.id
+    WHERE 
+      (
+      (cte.follow = true 
+      OR 
+      whorepost.id = $1
+      OR 
+      whorepost.id IN (
+        SELECT 
+          whofollow."idUser"
+        FROM
+          "postsPosts" reposts
+        LEFT JOIN
+          "usersUsers" whofollow
+        ON
+          reposts."idUser" = whofollow."idUser"
+        WHERE
+          whofollow."idFollower" = $1
+        ))
+      AND
+       posts."createdAt" > $2
+      AND
+       reposts."createdAt" > $2
+      )
+    GROUP BY
+      posts.id,
+      creator.name,
+      creator.image,
+      whorepost.name,
+      cte.follow,
+      cti.count,
+      reposts."createdAt"
+    ORDER BY
+      posts.id DESC,
+      reposts."createdAt" DESC;
+    `,
+    [idUser, datetime]
+  );
+}
 
 export const postRepos = {
   insertPost,
@@ -299,4 +427,5 @@ export const postRepos = {
   searchPostByUser,
   updatePostUser,
   insertRepost,
+  verifyMostRecentPost,
 };
