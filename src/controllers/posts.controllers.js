@@ -144,14 +144,27 @@ async function dislike(req, res) {
   }
 }
 async function viewByHashtag(req, res) {
+  const { page } = req.query;
   const { hashtag } = req.params;
   const { rows: user } = res.locals.userExist;
 
   const idUser = user[0].idUser;
+  let offsetPages;
+
+  switch (page) {
+    case "1":
+    case undefined:
+      offsetPages = 0;
+      break;
+    default:
+      offsetPages = (page - 1) * 10;
+      break;
+  }
   try {
     const { rows: posts } = await hashtagRepos.getPostsFromHashtag({
       idUser,
       hashtag,
+      offset: offsetPages,
     });
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
 
