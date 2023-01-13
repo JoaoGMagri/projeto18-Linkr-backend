@@ -8,4 +8,8 @@ const routes = express.Router();
 
 routes.get("/users/:id", authorization, usersControllers.viewAllPostsByUser);
 
+routes.post("/follow", authorization, usersControllers.follow);
+
+routes.delete("/unfollow/:id", authorization, usersControllers.unfollow);
+
 export default routes;

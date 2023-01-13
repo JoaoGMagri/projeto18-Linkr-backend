@@ -35,7 +35,9 @@ routes.delete(
   postControllers.deletePost
 );
 
-routes.post("/metadata", postControllers.getData)
+routes.post("/metadata", postControllers.getData);
 routes.put("/posts/:idPost", updateValidation, postControllers.updatePost);
+
+routes.post("/refresh", authorization, postControllers.refresh);
 
 export default routes;

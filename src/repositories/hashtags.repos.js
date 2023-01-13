@@ -20,7 +20,8 @@ async function insertHashtag(name) {
       hashtags (
         name
       )
-    VALUES ($1);
+    VALUES ($1)
+    RETUNNING id;
   `,
     [name]
   );
@@ -43,87 +44,120 @@ async function getAllHashtags() {
       10;
   `);
 }
-async function getPostsFromHashtag({ idUser, hashtag }) {
+async function getPostsFromHashtag({ idUser, hashtag, offset }) {
   return connection.query(
     `
+    WITH cti AS (
+      SELECT
+        posts.id,
+        COUNT(reposts."idPost") as count
+      FROM
+        posts
+      LEFT JOIN
+        "postsPosts" reposts
+      ON
+        posts.id = reposts."idPost"
+      GROUP BY
+        posts.id
+    ),
+    cte AS (
+      SELECT
+        posts.id,
+        CASE 
+        WHEN $1 = ANY (array_agg(followers."idFollower")) 
+          THEN true
+          ELSE false
+        END as follow
+      FROM
+        posts
+      LEFT JOIN
+        "usersUsers" followers
+      ON
+        posts."idUser" = followers."idUser"
+      GROUP BY
+        posts.id
+    )
     SELECT
       posts.id,
       posts.url,
       posts.text,
       posts."idUser" as "idCreator",
-      users.name as "createdBy",
-      users.image as "imageCreator",
+      creator.name as "createdBy",
+      creator.image as "imageCreator",
       COALESCE (
         array_agg (
           json_build_object (
-            'id', users.id,
-            'user', u.name
+            'id', wholiked.id,
+            'user', wholiked.name
           )
-        ) FILTER (where u.name is not null), ARRAY[]::json[] 
+        ) FILTER (where wholiked.name is not null), ARRAY[]::json[] 
       ) as likes,
-      CASE
-        WHEN $1 = ANY (array_agg(u.id)) THEN true
-      ELSE
-        false
-      END AS "userLiked",
-      CASE
-        WHEN $1 = ANY (array_agg("usersUsers"."idFollower")) THEN true
-      ELSE
-        false
-      END AS "follow",
-      CASE
-        WHEN posts.id = ANY (array_agg("postsPosts"."idPost")) THEN u2.name
-      ELSE
-        null
-      END AS "reposts"
-    FROM
+      CASE WHEN $1 = ANY (array_agg(wholiked.id)) 
+        THEN true
+        ELSE false 
+        END 
+      as "userLiked",
+      cte.follow,
+      cti.count,
+      CASE WHEN posts.id = ANY (array_agg(reposts."idPost"))
+        THEN whorepost.name
+        ELSE null
+        END 
+      as reposts
+    FROM 
       posts
-
-
-    INNER JOIN
-      "hashtagsPosts"
+    JOIN cte ON cte.id = posts.id
+    JOIN cti ON cti.id = posts.id
+    LEFT JOIN
+      users creator
     ON
-      posts.id="hashtagsPosts"."idPost"
-    INNER JOIN
-      hashtags
+      posts."idUser" = creator.id 
+    LEFT JOIN
+      "hashtagsPosts" trending
     ON
-      hashtags.id="hashtagsPosts"."idHashtag"
-    LEFT JOIN 
-      users 
-    ON 
-      posts."idUser" = users.id
-      LEFT JOIN 
+      posts.id = trending."idPost"
+    INNER JOIN
+      hashtags tag
+    ON
+      trending."idHashtag" = tag.id
+    LEFT JOIN
       "usersPosts" likes
-    ON 
-      likes."idPost" = posts.id
-    LEFT JOIN 
-      users u
-    ON 
-      likes."idUser" = u.id
-
-    LEFT JOIN 
-      "usersUsers" 
-    ON 
-      posts."idUser" = "usersUsers"."idUser"
-    LEFT JOIN 
-      "postsPosts" 
-    ON 
-      posts."id" = "postsPosts"."idPost"  
-    LEFT JOIN 
-      "users" u2 
-    ON 
-      u2."id" = "postsPosts"."idUser"
-
-
-    WHERE
-      hashtags.name=$2
-    GROUP BY 
+    ON
+      posts.id = likes."idPost"
+    LEFT JOIN
+      users wholiked
+    ON
+      likes."idUser" = wholiked.id
+    LEFT JOIN
+      "usersUsers" followers
+    ON
+      posts."idUser" = followers."idUser"
+    LEFT JOIN
+      "postsPosts" reposts
+    ON
+      posts.id = reposts."idPost"
+    LEFT JOIN
+      users whorepost
+    ON
+      reposts."idUser" = whorepost.id
+    WHERE 
+      (
+      tag.name = $2
+      )
+    GROUP BY
       posts.id,
-      users.name,
-      users.image,
-      u2.name;
+      creator.name,
+      creator.image,
+      whorepost.name,
+      cte.follow,
+      cti.count,
+      reposts."createdAt"
+    ORDER BY
+      posts.id DESC,
+      reposts."createdAt" DESC
+    LIMIT 10 OFFSET $3;
   `,
-    [idUser, hashtag]
+    [idUser, hashtag, offset]
   );
 }
 async function addUsedHashtag({ idHashtag, idPost }) {

@@ -1,6 +1,7 @@
 import { hashtagRepos } from "../repositories/hashtags.repos.js";
 import { postRepos } from "../repositories/posts.repos.js";
 import urlMetadata from "url-metadata";
+import { usersRepos } from "../repositories/users.repos.js";
 
 async function publishPost(req, res) {
   const { text, url, hashtags } = req.body;
@@ -20,11 +21,13 @@ async function publishPost(req, res) {
     if (!!hashtags.length) {
       hashtags.forEach(async (tag) => {
         const findTag = await hashtagRepos.findHashtag(tag);
+        let id = findTag.rows[0].id;
         if (findTag.rowCount === 0) {
-          await hashtagRepos.insertHashtag(tag);
+          const { rows: tag } = await hashtagRepos.insertHashtag(tag);
+          id = tag[0].id;
         }
         await hashtagRepos.addUsedHashtag({
-          idHashtag: findTag.rows[0].id,
+          idHashtag: id,
           idPost: post[0].id,
         });
       });
@@ -36,34 +39,40 @@ async function publishPost(req, res) {
   }
 }
 async function listPosts(req, res) {
+  const { page } = req.query;
   const { rows: user } = res.locals.userExist;
 
   const idUser = user[0].idUser;
-  try {
-    const { rows: posts } = await postRepos.listPost(idUser);
-    const { rows: hashtags } = await hashtagRepos.getAllHashtags();
+  let offsetPages;
 
+  switch (page) {
+    case "1":
+    case undefined:
+      offsetPages = 0;
+      break;
+    default:
+      offsetPages = (page - 1) * 10;
+      break;
+  }
+  try {
+    const { rows: posts } = await postRepos.listPost(idUser, offsetPages);
+    const { rows: hashtags } = await hashtagRepos.getAllHashtags();
+    const { rows: users } = await usersRepos.getAllUser(idUser);
+
+    console.log(users);
     // const { rows: postData } = await getPostsUrl(posts);
     const result = {
       posts,
       hashtags,
+      users,
     };
-    console.log(result.posts);
     return res.status(200).send(result);
   } catch (e) {
+    console.log(e.message);
     return res.status(500).send(e.message);
   }
 }
-/* async function getPostsUrl(result) {
-  let postsData = [];
-  for await (let post of result) {
-    let url = await getData(post.url);
-    postsData.push({ ...post, ...url });
-  }
-  return postsData;
-} */
 async function getData(req, res) {
-  console.log(req.body);
   const { link } = req.body;
   let data = {};
   try {
@@ -134,18 +143,33 @@ async function dislike(req, res) {
   }
 }
 async function viewByHashtag(req, res) {
+  const { page } = req.query;
   const { hashtag } = req.params;
   const { rows: user } = res.locals.userExist;
 
   const idUser = user[0].idUser;
+  let offsetPages;
+
+  switch (page) {
+    case "1":
+    case undefined:
+      offsetPages = 0;
+      break;
+    default:
+      offsetPages = (page - 1) * 10;
+      break;
+  }
   try {
     const { rows: posts } = await hashtagRepos.getPostsFromHashtag({
       idUser,
       hashtag,
+      offset: offsetPages,
     });
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
 
-    return res.status(200).send({ posts, hashtags });
+    const { rows: users } = await usersRepos.getAllUser(idUser);
+
+    return res.status(200).send({ posts, hashtags, users });
   } catch (error) {
     return res.status(500).send(error.message);
   }
@@ -173,7 +197,6 @@ async function viewLikesByPost(req, res) {
     return res.status(500).send(error);
   }
 }
-
 async function updatePost(req, res) {
   const { idPost } = req.params;
   const { data } = req.body;
@@ -183,6 +206,21 @@ async function updatePost(req, res) {
     return res.status(200).send(data);
   } catch (error) {
     return res.status(500).send(error);
+  }
+}
+async function refresh(req, res) {
+  const { datetime } = req.body;
+  const { rows: user } = res.locals.userExist;
+
+  const idUser = user[0].idUser;
+  try {
+    const { rows: posts } = await postRepos.verifyMostRecentPost(
+      idUser,
+      datetime
+    );
+    return res.status(200).send(posts);
+  } catch (error) {
+    return res.status(500).send(error.message);
   }
 }
 
@@ -196,4 +234,5 @@ export const postControllers = {
   viewLikesByPost,
   getData,
   updatePost,
+  refresh,
 };

@@ -1,94 +1,142 @@
 import { connection } from "../database/database.js";
 
-async function getAllPostsUsers({ idUser, id }) {
+async function getAllPostsUsers({ idUser, id, offset }) {
   return connection.query(
     `
+    WITH cti AS (
+      SELECT
+        posts.id,
+        COUNT(reposts."idPost") as count
+      FROM
+        posts
+      LEFT JOIN
+        "postsPosts" reposts
+      ON
+        posts.id = reposts."idPost"
+      GROUP BY
+        posts.id
+    ),
+    cte AS (
+      SELECT
+        posts.id,
+        CASE 
+        WHEN $1 = ANY (array_agg(followers."idFollower")) 
+          THEN true
+          ELSE false
+        END as follow
+      FROM
+        posts
+      LEFT JOIN
+        "usersUsers" followers
+      ON
+        posts."idUser" = followers."idUser"
+      GROUP BY
+        posts.id
+    )
     SELECT
       posts.id,
       posts.url,
       posts.text,
       posts."idUser" as "idCreator",
-      u1.name as "createdBy",
-      u1.image as "imageCreator",
+      creator.name as "createdBy",
+      creator.image as "imageCreator",
       COALESCE (
         array_agg (
           json_build_object (
-            'id', u2.id,
-            'user', u3.name
+            'id', wholiked.id,
+            'user', wholiked.name
           )
-        ) FILTER (where u3.name is not null), ARRAY[]::json[] 
+        ) FILTER (where wholiked.name is not null), ARRAY[]::json[] 
       ) as likes,
-      CASE
-        WHEN $1 = ANY (array_agg(u3.id)) THEN true
-      ELSE
-        false
-      END AS "userLiked",
-      CASE
-        WHEN $1 = ANY (array_agg("usersUsers"."idFollower")) THEN true
-      ELSE
-        false
-      END AS "follow",
-      CASE
-        WHEN posts.id = ANY (array_agg("postsPosts"."idPost")) THEN u4.name
-      ELSE
-        null
-      END AS "reposts"
-    FROM
+      CASE WHEN $1 = ANY (array_agg(wholiked.id)) 
+        THEN true
+        ELSE false 
+        END 
+      as "userLiked",
+      cte.follow,
+      cti.count,
+      CASE WHEN posts.id = ANY (array_agg(reposts."idPost"))
+        THEN whorepost.name
+        ELSE null
+        END 
+      as reposts
+    FROM 
       posts
-
-
-    
-    INNER JOIN
-      users u1
+    JOIN cte ON cte.id = posts.id
+    JOIN cti ON cti.id = posts.id
+    LEFT JOIN
+      users creator
     ON
-      u1.id=posts."idUser"
-    LEFT JOIN 
-      users u2
-    ON 
-      posts."idUser" = u2.id
-    LEFT JOIN 
+      posts."idUser" = creator.id
+    LEFT JOIN
       "usersPosts" likes
-    ON 
-      likes."idPost" = posts.id
-    LEFT JOIN 
-      users u3
-    ON 
-      likes."idUser" = u3.id
-
-    LEFT JOIN 
-      "usersUsers" 
-    ON 
-      posts."idUser" = "usersUsers"."idUser"
-    LEFT JOIN 
-      "postsPosts" 
-    ON 
-      posts."id" = "postsPosts"."idPost"  
-    LEFT JOIN 
-      "users" u4 
-    ON 
-      u4."id" = "postsPosts"."idUser"
-
-    WHERE
-      u1.id=$2
-    GROUP BY 
+    ON
+      posts.id = likes."idPost"
+    LEFT JOIN
+      users wholiked
+    ON
+      likes."idUser" = wholiked.id
+    LEFT JOIN
+      "usersUsers" followers
+    ON
+      posts."idUser" = followers."idUser"
+    LEFT JOIN
+      "postsPosts" reposts
+    ON
+      posts.id = reposts."idPost"
+    LEFT JOIN
+      users whorepost
+    ON
+      reposts."idUser" = whorepost.id
+    WHERE 
+      (
+      creator.id = $2
+      OR
+      whorepost.id = $2
+      )
+    GROUP BY
       posts.id,
-      u1.name,
-      u1.image,
-      u2.name,
-      u4.name
+      creator.name,
+      creator.image,
+      whorepost.name,
+      cte.follow,
+      cti.count,
+      reposts."createdAt"
     ORDER BY
-      posts.id DESC;
+      posts.id DESC,
+      reposts."createdAt" DESC
+    LIMIT 10 OFFSET $3;
   `,
-    [idUser, id]
+    [idUser, id, offset]
   );
 }
-async function getAllUser() {
-  return connection.query(`
+async function getAllUser(idUser) {
+  return connection.query(
+    `
     SELECT
-      *
+      users.id,
+      users.name,
+      users.image,
+      CASE
+        WHEN $1 = ANY (array_agg(uu."idFollower")) 
+          THEN true
+          ELSE false
+        END as follow
     FROM
-      users;
-  `);
+      users
+    LEFT JOIN
+      "usersUsers" uu
+    ON
+      uu."idUser" = users.id
+    WHERE
+      users.id<>$1
+    GROUP BY
+      users.id
+    ORDER BY
+      follow DESC;
+  `,
+    [idUser]
+  );
 }
 async function getUser(id) {
   return connection.query(
@@ -104,8 +152,51 @@ async function getUser(id) {
   );
 }
 
+async function getFollow(id, idUsers) {
+  return connection.query(
+    `
+      SELECT
+      "usersUsers".id
+      FROM
+        "usersUsers"
+      WHERE
+        "idUser"=$1 AND "idFollower"=$2
+      GROUP BY
+        "usersUsers".id;
+    `,
+    [id, idUsers]
+  );
+}
+
+async function createFollow(id, idUsers) {
+  return connection.query(
+    `
+      INSERT INTO
+        "usersUsers"("idUser", "idFollower")
+      VALUES
+        ($1, $2)
+      RETURNING id;
+    `,
+    [id, idUsers]
+  );
+}
+
+async function deleteFollow(id) {
+  connection.query(
+    `
+      DELETE FROM
+        "usersUsers"
+      WHERE
+        id = $1;
+    `,
+    [id]
+  );
+}
 export const usersRepos = {
   getUser,
   getAllUser,
   getAllPostsUsers,
+  getFollow,
+  createFollow,
+  deleteFollow,
 };
