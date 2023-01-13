@@ -159,6 +159,18 @@ async function removePeopleWhoLiked({ idUser, idPost }) {
   );
 }
 
+async function deletePostsPostsUser(idPost) {
+  return connection.query(
+    `
+    DELETE FROM 
+      "postsPosts" 
+    WHERE 
+      "idPost"=$1;
+    `,
+    [idPost]
+  );
+}
+
 async function deletePostUser(idPost) {
   return connection.query(
     `
@@ -267,4 +279,5 @@ export const postRepos = {
   searchPostByUser,
   updatePostUser,
   insertRepost,
+  deletePostsPostsUser,
 };

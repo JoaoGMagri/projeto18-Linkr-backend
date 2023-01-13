@@ -63,30 +63,27 @@ async function listPosts(req, res) {
   return postsData;
 } */
 async function getData(req, res) {
-  console.log(req.body)
-  const {link} = req.body;
+  console.log(req.body);
+  const { link } = req.body;
   let data = {};
   try {
     await urlMetadata(link).then(function (metadata) {
-      
       data.urlImage =
         metadata.image === ""
           ? "https://static.vecteezy.com/ti/vetor-gratis/t2/7126739-icone-de-ponto-de-interrogacao-gratis-vetor.jpg"
           : metadata.image;
-  
+
       data.urlTitle =
         metadata.title === null
           ? "Cannot load title information"
           : metadata.title;
-  
+
       data.urlDescription =
         metadata.description === ""
           ? "Cannot load description information"
           : metadata.description;
-
     });
     return res.send(data);
-    
   } catch (error) {
     return res.sendStatus(500);
   }
@@ -156,9 +153,11 @@ async function viewByHashtag(req, res) {
 async function deletePost(req, res) {
   const { idPost: id } = req.params;
   try {
+    await postRepos.deletePostsPostsUser(id);
     await postRepos.deletePostUser(id);
     return res.sendStatus(200);
   } catch (error) {
+    console.log(error);
     return res.status(500).send(error);
   }
 }
