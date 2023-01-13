@@ -76,7 +76,12 @@ async function getAllPostsUsers({ idUser, id, offset }) {
         THEN whorepost.name
         ELSE null
         END 
-      as reposts
+      as "repostsName",
+      CASE WHEN posts.id = ANY (array_agg(reposts."idPost"))
+        THEN whorepost.id
+        ELSE null
+        END 
+      as "repostsId"
     FROM 
       posts
     JOIN cte ON cte.id = posts.id
@@ -120,7 +125,8 @@ async function getAllPostsUsers({ idUser, id, offset }) {
       cte.follow,
       cti.count,
       cto.likes,
-      reposts."createdAt"
+      reposts."createdAt",
+      whorepost.id
     ORDER BY
       posts.id DESC,
       reposts."createdAt" DESC
