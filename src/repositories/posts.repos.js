@@ -428,6 +428,19 @@ async function verifyMostRecentPost(idUser, datetime) {
   );
 }
 
+async function commentInPost(idPost, comment, idUser) {
+  return connection.query(
+    `
+    INSERT INTO 
+      comments
+      ("idUserComment", "postComment", comment)
+    VALUES
+      ($1, $2, $3);      
+  `,
+    [idUser, idPost, comment]
+  );
+}
+
 export const postRepos = {
   insertPost,
   listPost,
@@ -441,4 +454,5 @@ export const postRepos = {
   insertRepost,
   deletePostsPostsUser,
   verifyMostRecentPost,
+  commentInPost,
 };

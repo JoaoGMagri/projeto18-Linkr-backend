@@ -224,6 +224,23 @@ async function refresh(req, res) {
   }
 }
 
+async function commentPost(req, res) {
+  const { idPost } = req.params;
+  const { rows: user } = res.locals.userExist;
+
+  const idUser = user[0].idUser;
+  const { data } = req.body;
+
+  try {
+    console.log(idPost, data.comment, idUser);
+    await postRepos.commentInPost(Number(idPost), data.comment, idUser);
+    return res.sendStatus(201);
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).send(error);
+  }
+}
+
 export const postControllers = {
   publishPost,
   listPosts,
@@ -235,4 +252,5 @@ export const postControllers = {
   getData,
   updatePost,
   refresh,
+  commentPost,
 };
