@@ -1,4 +1,25 @@
-WITH cti AS (
+WITH cto AS (
+  SELECT posts.id, COALESCE (
+      array_agg ( DISTINCT
+        jsonb_build_object (
+          'id', likes."idUser",
+          'user', wholiked.name
+        )
+      )FILTER (where wholiked.name is not null), ARRAY[]::JSONB[]) as likess
+  FROM
+    posts
+  LEFT JOIN
+    "usersPosts" likes
+  ON
+    posts.id = likes."idPost"
+  LEFT JOIN
+    users wholiked
+  ON
+    likes."idUser" = wholiked.id
+  GROUP BY
+    posts.id
+),
+cti AS (
   SELECT
     posts.id,
     COUNT(reposts."idPost") as count
@@ -35,14 +56,6 @@ SELECT
   posts."idUser" as "idCreator",
   creator.name as "createdBy",
   creator.image as "imageCreator",
-  COALESCE (
-    array_agg (
-      json_build_object (
-        'id', wholiked.id,
-        'user', wholiked.name
-      )
-    ) FILTER (where wholiked.name is not null), ARRAY[]::json[] 
-  ) as likes,
 
   -- se eu estou na lista de quem curtiu esse post
   CASE WHEN 18 = ANY (array_agg(wholiked.id)) 
@@ -55,6 +68,8 @@ SELECT
   cte.follow,
 
   cti.count,
+
+  cto.likess,
 
   -- se o post está na lista de posts repostados
   CASE WHEN posts.id = ANY (array_agg(reposts."idPost"))
@@ -71,6 +86,9 @@ ON cte.id = posts.id
 
 JOIN cti
 ON cti.id = posts.id
+
+JOIN cto
+ON cto.id = posts.id
 
 -- saber quem é o dono do post
 LEFT JOIN
@@ -133,7 +151,9 @@ GROUP BY
   creator.image,
   whorepost.name,
   cte.follow,
-  reposts."createdAt"
+  reposts."createdAt",
+  cti.count,
+  cto.likess
 ORDER BY
   posts.id DESC,
   reposts."createdAt" DESC
