@@ -47,7 +47,31 @@ async function getAllHashtags() {
 async function getPostsFromHashtag({ idUser, hashtag, offset }) {
   return connection.query(
     `
-    WITH cti AS (
+    WITH cto AS (
+      SELECT 
+        posts.id,
+        COALESCE (
+          array_agg ( 
+            DISTINCT jsonb_build_object (
+              'id', likes."idUser",
+              'user', wholiked.name
+            )
+          ) FILTER (where wholiked.name is not null),
+          ARRAY[]::JSONB[]) as likes
+      FROM
+        posts
+      LEFT JOIN
+        "usersPosts" likes
+      ON
+        posts.id = likes."idPost"
+      LEFT JOIN
+        users wholiked
+      ON
+        likes."idUser" = wholiked.id
+      GROUP BY
+        posts.id
+    ),
+    cti AS (
       SELECT
         posts.id,
         COUNT(reposts."idPost") as count
@@ -84,14 +108,6 @@ async function getPostsFromHashtag({ idUser, hashtag, offset }) {
       posts."idUser" as "idCreator",
       creator.name as "createdBy",
       creator.image as "imageCreator",
-      COALESCE (
-        array_agg (
-          json_build_object (
-            'id', wholiked.id,
-            'user', wholiked.name
-          )
-        ) FILTER (where wholiked.name is not null), ARRAY[]::json[] 
-      ) as likes,
       CASE WHEN $1 = ANY (array_agg(wholiked.id)) 
         THEN true
         ELSE false 
@@ -99,6 +115,7 @@ async function getPostsFromHashtag({ idUser, hashtag, offset }) {
       as "userLiked",
       cte.follow,
       cti.count,
+      cto.likes,
       CASE WHEN posts.id = ANY (array_agg(reposts."idPost"))
         THEN whorepost.name
         ELSE null
@@ -108,6 +125,7 @@ async function getPostsFromHashtag({ idUser, hashtag, offset }) {
       posts
     JOIN cte ON cte.id = posts.id
     JOIN cti ON cti.id = posts.id
+    JOIN cto ON cto.id = posts.id
     LEFT JOIN
       users creator
     ON
@@ -151,6 +169,7 @@ async function getPostsFromHashtag({ idUser, hashtag, offset }) {
       whorepost.name,
       cte.follow,
       cti.count,
+      cto.likes,
       reposts."createdAt"
     ORDER BY
       posts.id DESC,
