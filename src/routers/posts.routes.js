@@ -3,6 +3,7 @@ import express from "express";
 import { postControllers } from "../controllers/posts.controllers.js";
 import { authorization } from "../middleware/authorization.middleware.js";
 import {
+  commentValidation,
   deleteValidation,
   updateValidation,
   urlValidation,
@@ -30,7 +31,7 @@ routes.post("/:idPost/dislike", authorization, postControllers.dislike);
 
 routes.delete(
   "/posts/:idPost",
-  // authorization,
+  authorization,
   deleteValidation,
   postControllers.deletePost
 );
@@ -40,5 +41,12 @@ routes.put("/posts/:idPost", updateValidation, postControllers.updatePost);
 
 routes.post("/refresh", authorization, postControllers.refresh);
 routes.post("/repost/:idPost", authorization, postControllers.repost);
+
+routes.post(
+  "/:idPost/posts/comments",
+  authorization,
+  commentValidation,
+  postControllers.commentPost
+);
 
 export default routes;

@@ -43,3 +43,18 @@ export async function updateValidation(req, res, next) {
   }
   next();
 }
+
+export async function commentValidation(req, res, next) {
+  const { idPost } = req.params;
+  //const { data } = req.body;
+  try {
+    const idPostExists = await postRepos.searchIdPost(idPost);
+    if (idPostExists.rowCount === 0) {
+      return res.sendStatus(404);
+    }
+  } catch (e) {
+    return console.log(e), res.sendStatus(500);
+  }
+  next()
+
+}

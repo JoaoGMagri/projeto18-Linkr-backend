@@ -177,9 +177,11 @@ async function viewByHashtag(req, res) {
 async function deletePost(req, res) {
   const { idPost: id } = req.params;
   try {
+    await postRepos.deletePostsPostsUser(id);
     await postRepos.deletePostUser(id);
     return res.sendStatus(200);
   } catch (error) {
+    console.log(error);
     return res.status(500).send(error);
   }
 }
@@ -219,7 +221,7 @@ async function refresh(req, res) {
   }
 }
 async function repost(req, res) {
-  const { idPost } = req.params
+  const { idPost } = req.params;
   const { rows: user } = res.locals.userExist;
   const idUser = user[0].idUser;
 
@@ -230,6 +232,23 @@ async function repost(req, res) {
   } catch (error) {
     console.log(error);
     return res.status(500).send(error.message);
+  }
+}
+
+async function commentPost(req, res) {
+  const { idPost } = req.params;
+  const { rows: user } = res.locals.userExist;
+
+  const idUser = user[0].idUser;
+  const { data } = req.body;
+
+  try {
+    console.log(idPost, data.comment, idUser);
+    await postRepos.commentInPost(Number(idPost), data.comment, idUser);
+    return res.sendStatus(201);
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).send(error);
   }
 }
 
@@ -244,5 +263,6 @@ export const postControllers = {
   getData,
   updatePost,
   refresh,
-  repost
+  commentPost,
+  repost,
 };

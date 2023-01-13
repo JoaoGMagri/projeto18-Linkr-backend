@@ -237,6 +237,18 @@ async function removePeopleWhoLiked({ idUser, idPost }) {
   );
 }
 
+async function deletePostsPostsUser(idPost) {
+  return connection.query(
+    `
+    DELETE FROM 
+      "postsPosts" 
+    WHERE 
+      "idPost"=$1;
+    `,
+    [idPost]
+  );
+}
+
 async function deletePostUser(idPost) {
   return connection.query(
     `
@@ -500,6 +512,19 @@ async function postRepost(idUser, id) {
   );
 }
 
+async function commentInPost(idPost, comment, idUser) {
+  return connection.query(
+    `
+    INSERT INTO 
+      comments
+      ("idUserComment", "postComment", comment)
+    VALUES
+      ($1, $2, $3);      
+  `,
+    [idUser, idPost, comment]
+  );
+}
+
 export const postRepos = {
   insertPost,
   listPost,
@@ -511,6 +536,8 @@ export const postRepos = {
   searchPostByUser,
   updatePostUser,
   insertRepost,
+  deletePostsPostsUser,
   verifyMostRecentPost,
+  commentInPost,
   postRepost,
 };
