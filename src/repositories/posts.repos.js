@@ -50,7 +50,17 @@ async function listPost(idUser, offset) {
               'user', wholiked.name
             )
           ) FILTER (where wholiked.name is not null),
-          ARRAY[]::JSONB[]) as likes
+          ARRAY[]::JSONB[]) as likes,
+        COALESCE (
+          array_agg ( 
+            DISTINCT jsonb_build_object (
+              'id', whocomment.id,
+              'user', whocomment.name,
+              'image', whocomment.image,
+              'comment', comments.comment
+            )
+          ) FILTER (where whocomment.name is not null),
+          ARRAY[]::JSONB[]) as comments
       FROM
         posts
       LEFT JOIN
@@ -61,6 +71,14 @@ async function listPost(idUser, offset) {
         users wholiked
       ON
         likes."idUser" = wholiked.id
+      LEFT JOIN
+        comments
+      ON
+        posts.id = comments."postComment"
+      LEFT JOIN
+        users whocomment
+      ON
+        comments."idUserComment" = whocomment.id
       GROUP BY
         posts.id
     ),
@@ -110,6 +128,7 @@ async function listPost(idUser, offset) {
       cte.follow,
       cti.count,
       cto.likes,
+      cto.comments,
       CASE WHEN posts.id = ANY (array_agg(reposts."idPost"))
         THEN whorepost.name
         ELSE null
@@ -176,6 +195,7 @@ async function listPost(idUser, offset) {
       cte.follow,
       cti.count,
       cto.likes,
+      cto.comments,
       reposts."createdAt",
       whorepost.id
     ORDER BY
@@ -461,7 +481,7 @@ async function verifyMostRecentPost(idUser, id) {
   );
 }
 async function postRepost(idUser, id) {
-  console.log(idUser, id)
+  console.log(idUser, id);
   return connection.query(
     `
     INSERT INTO 
@@ -492,5 +512,5 @@ export const postRepos = {
   updatePostUser,
   insertRepost,
   verifyMostRecentPost,
-  postRepost
+  postRepost,
 };
