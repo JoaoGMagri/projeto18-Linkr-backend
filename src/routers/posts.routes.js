@@ -40,6 +40,7 @@ routes.post("/metadata", postControllers.getData);
 routes.put("/posts/:idPost", updateValidation, postControllers.updatePost);
 
 routes.post("/refresh", authorization, postControllers.refresh);
+routes.post("/repost/:idPost", authorization, postControllers.repost);
 
 routes.post(
   "/:idPost/posts/comments",

@@ -209,17 +209,28 @@ async function updatePost(req, res) {
   }
 }
 async function refresh(req, res) {
-  const { datetime } = req.body;
+  const { id } = req.body;
   const { rows: user } = res.locals.userExist;
 
   const idUser = user[0].idUser;
   try {
-    const { rows: posts } = await postRepos.verifyMostRecentPost(
-      idUser,
-      datetime
-    );
+    const { rows: posts } = await postRepos.verifyMostRecentPost(idUser, id);
     return res.status(200).send(posts);
   } catch (error) {
+    return res.status(500).send(error.message);
+  }
+}
+async function repost(req, res) {
+  const { idPost } = req.params;
+  const { rows: user } = res.locals.userExist;
+  const idUser = user[0].idUser;
+
+  try {
+    const idResp = await postRepos.postRepost(idUser, idPost);
+    console.log(idResp.rows);
+    return res.sendStatus(200);
+  } catch (error) {
+    console.log(error);
     return res.status(500).send(error.message);
   }
 }
@@ -253,4 +264,5 @@ export const postControllers = {
   updatePost,
   refresh,
   commentPost,
+  repost,
 };
