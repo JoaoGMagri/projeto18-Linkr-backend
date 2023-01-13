@@ -114,7 +114,12 @@ async function listPost(idUser, offset) {
         THEN whorepost.name
         ELSE null
         END 
-      as reposts  
+      as "repostsName",
+      CASE WHEN posts.id = ANY (array_agg(reposts."idPost"))
+        THEN whorepost.id
+        ELSE null
+        END 
+      as "repostsId" 
     FROM 
       posts
     JOIN cte ON cte.id = posts.id
@@ -171,7 +176,8 @@ async function listPost(idUser, offset) {
       cte.follow,
       cti.count,
       cto.likes,
-      reposts."createdAt"
+      reposts."createdAt",
+      whorepost.id
     ORDER BY
       posts.id DESC,
       reposts."createdAt" DESC
@@ -454,6 +460,25 @@ async function verifyMostRecentPost(idUser, id) {
     [idUser, id]
   );
 }
+async function postRepost(idUser, id) {
+  console.log(idUser, id)
+  return connection.query(
+    `
+    INSERT INTO 
+      "postsPosts" (
+        "idUser",
+        "idPost"
+        )
+    VALUES
+        (
+          $1, 
+          $2
+        ) 
+    RETURNING id;
+    `,
+    [idUser, id]
+  );
+}
 
 export const postRepos = {
   insertPost,
@@ -467,4 +492,5 @@ export const postRepos = {
   updatePostUser,
   insertRepost,
   verifyMostRecentPost,
+  postRepost
 };

@@ -22,15 +22,14 @@ async function viewAllPostsByUser(req, res) {
     const {
       rows: [user],
     } = await usersRepos.getUser(id);
+    console.log("oi")
     const { rows: posts } = await usersRepos.getAllPostsUsers({
       idUser,
       id,
       offset: offsetPages,
     });
     const { rows: hashtags } = await hashtagRepos.getAllHashtags();
-
     const { rows: users } = await usersRepos.getAllUser(idUser);
-
     const { rows: follow } = await usersRepos.getFollow(id, idUser);
     delete user.password;
 
@@ -43,6 +42,7 @@ async function viewAllPostsByUser(req, res) {
     };
     return res.status(200).send(result);
   } catch (error) {
+    console.log(error);
     return res.status(500).send(error.message);
   }
 }

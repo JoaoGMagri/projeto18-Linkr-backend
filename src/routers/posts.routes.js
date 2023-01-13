@@ -39,5 +39,6 @@ routes.post("/metadata", postControllers.getData);
 routes.put("/posts/:idPost", updateValidation, postControllers.updatePost);
 
 routes.post("/refresh", authorization, postControllers.refresh);
+routes.post("/repost/:idPost", authorization, postControllers.repost);
 
 export default routes;
